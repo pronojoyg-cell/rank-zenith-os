@@ -14,7 +14,7 @@ export function Panel({
   title?: string;
   subtitle?: string;
   action?: ReactNode;
-  accent?: "cyan" | "gold" | "none";
+  accent?: "cyan" | "gold" | "red" | "none";
 }) {
   return (
     <section
@@ -22,6 +22,7 @@ export function Panel({
         "glass-panel rounded-2xl p-5 animate-slide-up",
         accent === "cyan" && "ring-1 ring-primary/20",
         accent === "gold" && "ring-1 ring-gold/20",
+        accent === "red" && "ring-1 ring-danger/20",
         className,
       )}
     >
@@ -85,7 +86,7 @@ export function Bar({
   className,
 }: {
   value: number;
-  tone?: "cyan" | "gold" | "green" | "red";
+  tone?: "cyan" | "gold" | "green" | "red" | "warn";
   className?: string;
 }) {
   const colors: Record<string, string> = {
@@ -93,6 +94,7 @@ export function Bar({
     gold: "from-gold to-warning",
     green: "from-success to-primary",
     red: "from-danger to-destructive",
+    warn: "from-warning to-gold",
   };
   return (
     <div className={cn("h-1.5 rounded-full bg-surface-2 overflow-hidden", className)}>
