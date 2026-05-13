@@ -14,16 +14,316 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      daily_tasks: {
+        Row: {
+          created_at: string
+          done: number
+          id: string
+          target: number
+          task_date: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          done?: number
+          id?: string
+          target?: number
+          task_date?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          done?: number
+          id?: string
+          target?: number
+          task_date?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      focus_sessions: {
+        Row: {
+          created_at: string
+          distractions: number
+          duration_sec: number
+          id: string
+          label: string | null
+          started_at: string
+          subject: Database["public"]["Enums"]["subject_t"] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          distractions?: number
+          duration_sec?: number
+          id?: string
+          label?: string | null
+          started_at?: string
+          subject?: Database["public"]["Enums"]["subject_t"] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          distractions?: number
+          duration_sec?: number
+          id?: string
+          label?: string | null
+          started_at?: string
+          subject?: Database["public"]["Enums"]["subject_t"] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mentor_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mistakes: {
+        Row: {
+          chapter: string | null
+          created_at: string
+          id: string
+          mark_cost: number
+          notes: string | null
+          question: string
+          resolved: boolean
+          subject: Database["public"]["Enums"]["subject_t"]
+          type: Database["public"]["Enums"]["mistake_t"]
+          user_id: string
+        }
+        Insert: {
+          chapter?: string | null
+          created_at?: string
+          id?: string
+          mark_cost?: number
+          notes?: string | null
+          question: string
+          resolved?: boolean
+          subject: Database["public"]["Enums"]["subject_t"]
+          type?: Database["public"]["Enums"]["mistake_t"]
+          user_id: string
+        }
+        Update: {
+          chapter?: string | null
+          created_at?: string
+          id?: string
+          mark_cost?: number
+          notes?: string | null
+          question?: string
+          resolved?: boolean
+          subject?: Database["public"]["Enums"]["subject_t"]
+          type?: Database["public"]["Enums"]["mistake_t"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mocks: {
+        Row: {
+          chemistry: number | null
+          concept_loss: number | null
+          created_at: string
+          id: string
+          marks: number
+          maths: number | null
+          max_marks: number
+          name: string
+          notes: string | null
+          physics: number | null
+          rank_projection: number | null
+          silly_loss: number | null
+          taken_on: string
+          time_loss: number | null
+          user_id: string
+        }
+        Insert: {
+          chemistry?: number | null
+          concept_loss?: number | null
+          created_at?: string
+          id?: string
+          marks?: number
+          maths?: number | null
+          max_marks?: number
+          name: string
+          notes?: string | null
+          physics?: number | null
+          rank_projection?: number | null
+          silly_loss?: number | null
+          taken_on?: string
+          time_loss?: number | null
+          user_id: string
+        }
+        Update: {
+          chemistry?: number | null
+          concept_loss?: number | null
+          created_at?: string
+          id?: string
+          marks?: number
+          maths?: number | null
+          max_marks?: number
+          name?: string
+          notes?: string | null
+          physics?: number | null
+          rank_projection?: number | null
+          silly_loss?: number | null
+          taken_on?: string
+          time_loss?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      practice_sessions: {
+        Row: {
+          attempted: number
+          chapter: string | null
+          correct: number
+          created_at: string
+          difficulty: Database["public"]["Enums"]["difficulty_t"]
+          duration_min: number
+          id: string
+          notes: string | null
+          subject: Database["public"]["Enums"]["subject_t"]
+          user_id: string
+        }
+        Insert: {
+          attempted?: number
+          chapter?: string | null
+          correct?: number
+          created_at?: string
+          difficulty?: Database["public"]["Enums"]["difficulty_t"]
+          duration_min?: number
+          id?: string
+          notes?: string | null
+          subject: Database["public"]["Enums"]["subject_t"]
+          user_id: string
+        }
+        Update: {
+          attempted?: number
+          chapter?: string | null
+          correct?: number
+          created_at?: string
+          difficulty?: Database["public"]["Enums"]["difficulty_t"]
+          duration_min?: number
+          id?: string
+          notes?: string | null
+          subject?: Database["public"]["Enums"]["subject_t"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          exam_date: string | null
+          id: string
+          target_air: number | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          exam_date?: string | null
+          id: string
+          target_air?: number | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          exam_date?: string | null
+          id?: string
+          target_air?: number | null
+        }
+        Relationships: []
+      }
+      revisions: {
+        Row: {
+          confidence: number
+          created_at: string
+          id: string
+          last_revised_at: string
+          next_review_at: string
+          stage: Database["public"]["Enums"]["rev_stage_t"]
+          subject: Database["public"]["Enums"]["subject_t"]
+          topic: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          last_revised_at?: string
+          next_review_at?: string
+          stage?: Database["public"]["Enums"]["rev_stage_t"]
+          subject: Database["public"]["Enums"]["subject_t"]
+          topic: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          last_revised_at?: string
+          next_review_at?: string
+          stage?: Database["public"]["Enums"]["rev_stage_t"]
+          subject?: Database["public"]["Enums"]["subject_t"]
+          topic?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      advance_revision: {
+        Args: { _confidence: number; _id: string }
+        Returns: {
+          confidence: number
+          created_at: string
+          id: string
+          last_revised_at: string
+          next_review_at: string
+          stage: Database["public"]["Enums"]["rev_stage_t"]
+          subject: Database["public"]["Enums"]["subject_t"]
+          topic: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "revisions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
-      [_ in never]: never
+      difficulty_t: "easy" | "medium" | "hard" | "advanced"
+      mistake_t: "silly" | "concept" | "calculation" | "time" | "misread"
+      rev_stage_t: "D1" | "D3" | "D7" | "D14" | "D30" | "mastered"
+      subject_t: "Physics" | "Chemistry" | "Maths"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +450,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      difficulty_t: ["easy", "medium", "hard", "advanced"],
+      mistake_t: ["silly", "concept", "calculation", "time", "misread"],
+      rev_stage_t: ["D1", "D3", "D7", "D14", "D30", "mastered"],
+      subject_t: ["Physics", "Chemistry", "Maths"],
+    },
   },
 } as const
