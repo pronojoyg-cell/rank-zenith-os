@@ -1,4 +1,4 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Target,
@@ -8,10 +8,13 @@ import {
   FlaskConical,
   Brain,
   Trophy,
-  Sparkles,
+  LogOut,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const nav = [
   { to: "/", label: "Mission Control", icon: LayoutDashboard },
@@ -25,10 +28,25 @@ const nav = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("*").eq("id", user!.id).maybeSingle();
+      return data;
+    },
+  });
+
+  const examDate = profile?.exam_date ? new Date(profile.exam_date) : null;
+  const daysToExam = examDate
+    ? Math.max(0, Math.ceil((examDate.getTime() - Date.now()) / 86400000))
+    : null;
 
   return (
     <div className="min-h-screen flex">
-      {/* Sidebar */}
       <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border/60 bg-surface/40 backdrop-blur-xl sticky top-0 h-screen">
         <div className="px-5 py-6 flex items-center gap-2.5 border-b border-border/60">
           <div className="size-9 rounded-xl bg-gradient-to-br from-primary to-chart-4 grid place-items-center glow-cyan">
@@ -57,13 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     : "text-muted-foreground hover:text-foreground hover:bg-surface-2/50",
                 )}
               >
-                <Icon
-                  className={cn(
-                    "size-4 transition-colors",
-                    active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
-                  )}
-                  strokeWidth={2}
-                />
+                <Icon className={cn("size-4", active ? "text-primary" : "")} strokeWidth={2} />
                 <span className="flex-1">{item.label}</span>
                 {active && <span className="size-1.5 rounded-full bg-primary glow-cyan" />}
               </Link>
@@ -71,18 +83,37 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        <div className="px-3 pb-4">
-          <div className="glass-panel rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="size-3.5 text-gold" />
-              <span className="text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground">
-                Target
-              </span>
+        <div className="px-3 pb-4 space-y-3">
+          <Link to="/" className="block glass-panel rounded-xl p-4 hover:bg-surface-2/50 transition">
+            <div className="text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground">
+              Target AIR
             </div>
             <div className="text-2xl font-semibold tracking-tight text-gradient-gold">
-              AIR &lt; 100
+              &lt; {profile?.target_air ?? 100}
             </div>
-            <div className="text-xs text-muted-foreground mt-1">412 days to JEE Advanced</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {daysToExam !== null ? `${daysToExam} days to exam` : "Set your exam date"}
+            </div>
+          </Link>
+
+          <div className="flex items-center gap-2 px-2">
+            <div className="size-8 rounded-full bg-gradient-to-br from-primary to-chart-4 grid place-items-center text-xs font-semibold text-primary-foreground">
+              {(profile?.display_name ?? user?.email ?? "?").slice(0, 1).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-medium truncate">{profile?.display_name ?? user?.email}</div>
+              <div className="text-[10px] text-muted-foreground truncate">{user?.email}</div>
+            </div>
+            <button
+              onClick={async () => {
+                await signOut();
+                navigate({ to: "/auth" });
+              }}
+              className="size-8 rounded-lg grid place-items-center text-muted-foreground hover:text-foreground hover:bg-surface-2"
+              title="Sign out"
+            >
+              <LogOut className="size-4" />
+            </button>
           </div>
         </div>
       </aside>
