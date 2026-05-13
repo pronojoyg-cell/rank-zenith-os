@@ -1,108 +1,133 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Panel, Stat, Tag, Bar } from "@/components/ui-bits";
-import { AlertOctagon, Repeat, Camera, ChevronRight } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { Plus, Trash2, Check } from "lucide-react";
+import { Panel, Stat, Tag } from "@/components/ui-bits";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/mistakes")({ component: Mistakes });
 
-const top10 = [
-  { rank: 1, type: "Sign error in vector cross product", chapter: "Vectors", subject: "Maths", count: 6, cat: "Silly" as const, status: "Not mastered" },
-  { rank: 2, type: "L'Hôpital applied without indeterminate form", chapter: "Limits", subject: "Maths", count: 5, cat: "Concept" as const, status: "Not mastered" },
-  { rank: 3, type: "Sign convention in mirrors", chapter: "Geometric Optics", subject: "Physics", count: 4, cat: "Concept" as const, status: "Improving" },
-  { rank: 4, type: "Misread units (g vs kg)", chapter: "Stoichiometry", subject: "Chemistry", count: 4, cat: "Calc" as const, status: "Improving" },
-  { rank: 5, type: "Forgot to verify domain in inequalities", chapter: "Quadratic", subject: "Maths", count: 3, cat: "Silly" as const, status: "Not mastered" },
-  { rank: 6, type: "Missed −1 in inverse trig identities", chapter: "Inverse Trig", subject: "Maths", count: 3, cat: "Memory" as const, status: "Not mastered" },
-  { rank: 7, type: "Selected wrong reactant in SN1/SN2", chapter: "Haloalkanes", subject: "Chemistry", count: 3, cat: "Concept" as const, status: "Not mastered" },
-  { rank: 8, type: "Used incorrect MOI for hollow vs solid", chapter: "Rotational", subject: "Physics", count: 3, cat: "Memory" as const, status: "Improving" },
-];
-
-const catTone: Record<string, "red" | "warn" | "cyan" | "gold"> = {
-  Concept: "red",
-  Silly: "warn",
-  Calc: "cyan",
-  Memory: "gold",
-};
+const TYPES = ["silly", "concept", "calculation", "time", "misread"] as const;
+const SUBJECTS = ["Physics", "Chemistry", "Maths"] as const;
 
 function Mistakes() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const q = useQuery({
+    queryKey: ["mistakes", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("mistakes").select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const [f, setF] = useState({ subject: "Physics", chapter: "", question: "", type: "concept", mark_cost: 4, notes: "" });
+
+  const add = useMutation({
+    mutationFn: async () => {
+      if (!f.question.trim()) throw new Error("Describe the mistake");
+      const { error } = await supabase.from("mistakes").insert({ ...f, user_id: user!.id } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["mistakes"] }); setF({ ...f, question: "", notes: "" }); toast.success("Logged"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const toggle = useMutation({
+    mutationFn: async (m: any) => {
+      const { error } = await supabase.from("mistakes").update({ resolved: !m.resolved }).eq("id", m.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["mistakes"] }),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => { const { error } = await supabase.from("mistakes").delete().eq("id", id); if (error) throw error; },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["mistakes"] }),
+  });
+
+  const list = q.data ?? [];
+  const open = list.filter((m: any) => !m.resolved);
+  const cost = open.reduce((a, m: any) => a + m.mark_cost, 0);
+  const byType = TYPES.map((t) => ({ t, n: list.filter((m: any) => m.type === t).length }));
+
   return (
     <div className="px-6 lg:px-10 py-8 max-w-[1400px] mx-auto space-y-6">
-      <header className="flex items-end justify-between flex-wrap gap-4">
-        <div>
-          <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-            Error Intelligence System
-          </div>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            Mistakes are the <span className="text-gradient-cyan">highest-value data</span>.
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground max-w-xl">
-            Every error logged. Every pattern surfaced. Reattempts auto-scheduled until mastery.
-          </p>
-        </div>
-        <button className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90">
-          <Camera className="size-4" /> Log mistake
-        </button>
+      <header>
+        <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">Error Intelligence</div>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Mistakes are data.</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Tag every error. Reattempt until it's gone.</p>
       </header>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Panel className="!p-4"><Stat label="Active errors" value="42" delta="−8 this week" tone="good" /></Panel>
-        <Panel className="!p-4"><Stat label="Mastered" value="118" delta="+11" tone="good" /></Panel>
-        <Panel className="!p-4"><Stat label="Reattempts pending" value="16" delta="6 due today" tone="warn" /></Panel>
-        <Panel className="!p-4"><Stat label="Highest leak" value="Maths" delta="Vectors · Limits" tone="bad" /></Panel>
+        <Panel className="!p-4"><Stat label="Open" value={open.length} tone="warn" /></Panel>
+        <Panel className="!p-4"><Stat label="Marks at risk" value={cost} tone="bad" /></Panel>
+        <Panel className="!p-4"><Stat label="Resolved" value={list.length - open.length} tone="good" /></Panel>
+        <Panel className="!p-4"><Stat label="Total logged" value={list.length} /></Panel>
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-6">
-        <Panel title="Top 10 recurring errors" subtitle="Ranked by repetition × cost" accent="red" className="lg:col-span-3">
-          <ol className="space-y-1.5">
-            {top10.map((e) => (
-              <li key={e.rank} className="group flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2/60 transition border border-transparent hover:border-border">
-                <div className="shrink-0 size-7 rounded-md grid place-items-center bg-surface-2 border border-border text-xs font-semibold tabular-nums text-muted-foreground">
-                  {e.rank}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium leading-tight">{e.type}</div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">
-                    {e.subject} · {e.chapter}
-                  </div>
-                </div>
-                <div className="text-xs tabular-nums text-danger font-semibold">×{e.count}</div>
-                <Tag tone={catTone[e.cat]}>{e.cat}</Tag>
-                <ChevronRight className="size-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition" />
-              </li>
-            ))}
-          </ol>
+      <div className="grid lg:grid-cols-3 gap-6">
+        <Panel title="Log a mistake" accent="red">
+          <form onSubmit={(e) => { e.preventDefault(); add.mutate(); }} className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <select value={f.subject} onChange={(e) => setF({ ...f, subject: e.target.value })} className="px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm">
+                {SUBJECTS.map((s) => <option key={s}>{s}</option>)}
+              </select>
+              <select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })} className="px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm">
+                {TYPES.map((t) => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <input value={f.chapter} onChange={(e) => setF({ ...f, chapter: e.target.value })} placeholder="Chapter" className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm" />
+            <textarea value={f.question} onChange={(e) => setF({ ...f, question: e.target.value })} placeholder="What went wrong?" rows={2} className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm" />
+            <label className="block text-xs">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Mark cost</span>
+              <input type="number" min={1} value={f.mark_cost} onChange={(e) => setF({ ...f, mark_cost: +e.target.value })} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-surface-2 border border-border text-sm tabular-nums" />
+            </label>
+            <textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} placeholder="Fix / lesson" rows={2} className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm" />
+            <button className="w-full py-2 rounded-lg bg-danger text-destructive-foreground text-sm font-medium flex items-center justify-center gap-1"><Plus className="size-4" /> Log mistake</button>
+          </form>
         </Panel>
 
-        <div className="lg:col-span-2 space-y-6">
-          <Panel title="By category" accent="cyan">
-            {[
-              { name: "Concept gap", v: 18, tone: "red" as const },
-              { name: "Silly mistake", v: 12, tone: "warn" as const },
-              { name: "Calculation", v: 7, tone: "cyan" as const },
-              { name: "Memory", v: 4, tone: "gold" as const },
-              { name: "Time pressure", v: 1, tone: "red" as const },
-            ].map((c) => (
-              <div key={c.name} className="mb-3 last:mb-0">
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-foreground/80">{c.name}</span>
-                  <span className="tabular-nums text-muted-foreground">{c.v}</span>
-                </div>
-                <Bar value={c.v * 5} tone={c.tone} />
+        <Panel title="Pattern by type" className="lg:col-span-2">
+          <div className="grid grid-cols-5 gap-2">
+            {byType.map((b) => (
+              <div key={b.t} className="p-3 rounded-xl bg-surface-2/40 border border-border text-center">
+                <div className="text-2xl font-semibold tabular-nums">{b.n}</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">{b.t}</div>
               </div>
             ))}
-          </Panel>
-
-          <Panel title="Reattempt queue" accent="gold" action={<Tag tone="warn"><Repeat className="size-3" /> 6 today</Tag>}>
-            <ul className="space-y-2">
-              {top10.slice(0, 3).map((e) => (
-                <li key={e.rank} className="flex items-center gap-3 p-2.5 rounded-lg bg-surface-2/40 border border-border">
-                  <AlertOctagon className="size-4 text-danger shrink-0" />
-                  <div className="text-xs flex-1 min-w-0 truncate">{e.type}</div>
-                  <button className="text-xs font-medium text-primary">Solve</button>
-                </li>
-              ))}
-            </ul>
-          </Panel>
-        </div>
+          </div>
+        </Panel>
       </div>
+
+      <Panel title="All mistakes">
+        {list.length === 0 ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">No mistakes logged. Start tagging.</div>
+        ) : (
+          <ul className="space-y-2">
+            {list.map((m: any) => (
+              <li key={m.id} className={`group flex items-center gap-3 p-3 rounded-xl bg-surface-2/40 border border-border ${m.resolved ? "opacity-60" : ""}`}>
+                <button onClick={() => toggle.mutate(m)} className="size-7 rounded-md border border-border grid place-items-center hover:border-success">
+                  {m.resolved && <Check className="size-4 text-success" />}
+                </button>
+                <Tag tone={m.subject === "Physics" ? "cyan" : m.subject === "Chemistry" ? "gold" : "green"}>{m.subject}</Tag>
+                <Tag tone="red">{m.type}</Tag>
+                <div className="flex-1 min-w-0">
+                  <div className={`text-sm font-medium truncate ${m.resolved ? "line-through" : ""}`}>{m.question}</div>
+                  {m.notes && <div className="text-[11px] text-muted-foreground truncate">{m.notes}</div>}
+                </div>
+                <span className="text-xs tabular-nums text-danger">−{m.mark_cost}</span>
+                <button onClick={() => del.mutate(m.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger"><Trash2 className="size-4" /></button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
     </div>
   );
 }
