@@ -4,12 +4,15 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
 import { AppShell } from "@/components/AppShell";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -19,9 +22,7 @@ function NotFoundComponent() {
           Off the syllabus
         </div>
         <h1 className="mt-2 text-7xl font-semibold tracking-tight text-gradient-cyan">404</h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          That route isn't part of your prep plan.
-        </p>
+        <p className="mt-3 text-sm text-muted-foreground">That route isn't part of your prep plan.</p>
         <Link
           to="/"
           className="mt-6 inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition"
@@ -51,10 +52,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           >
             Retry
           </button>
-          <a
-            href="/"
-            className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium hover:bg-surface-2"
-          >
+          <a href="/" className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium hover:bg-surface-2">
             Mission Control
           </a>
         </div>
@@ -72,17 +70,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "An elite command center for IIT-JEE preparation: deep work, error intelligence, spaced revision, mock analytics and an AI mentor — engineered for top rank holders.",
+          "An elite command center for IIT-JEE preparation: deep work, error intelligence, spaced revision, mock analytics and an AI mentor.",
       },
-      { name: "author", content: "JEE OS" },
-      { property: "og:title", content: "JEE OS — Elite Operating System for AIR < 100" },
-      {
-        property: "og:description",
-        content:
-          "Mission control for serious JEE aspirants. Output over hours. Mistakes as data. Spaced revision built in.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -112,13 +101,34 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function Gate({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const { pathname } = useLocation();
+  if (pathname === "/auth") return <>{children}</>;
+  if (loading) {
+    return (
+      <div className="min-h-screen grid place-items-center text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        Loading…
+      </div>
+    );
+  }
+  if (!user) {
+    if (typeof window !== "undefined") window.location.replace("/auth");
+    return null;
+  }
+  return <AppShell>{children}</AppShell>;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell>
-        <Outlet />
-      </AppShell>
+      <AuthProvider>
+        <Gate>
+          <Outlet />
+        </Gate>
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
