@@ -1,0 +1,1 @@
+ALTER TABLE public.mentor_messages ADD COLUMN IF NOT EXISTS mentor TEXT NOT NULL DEFAULT 'ramanujan';
