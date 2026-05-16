@@ -82,6 +82,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          mentor: string
           role: string
           user_id: string
         }
@@ -89,6 +90,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          mentor?: string
           role: string
           user_id: string
         }
@@ -96,6 +98,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          mentor?: string
           role?: string
           user_id?: string
         }
