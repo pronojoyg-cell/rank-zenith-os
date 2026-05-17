@@ -8,6 +8,7 @@ import {
   FlaskConical,
   Brain,
   Trophy,
+  Flame,
   LogOut,
 } from "lucide-react";
 import type { ReactNode } from "react";
