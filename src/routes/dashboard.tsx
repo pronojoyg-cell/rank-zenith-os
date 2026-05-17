@@ -19,6 +19,11 @@ import {
   LineChart,
   Line,
   ComposedChart,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
 } from "recharts";
 import {
   Activity,
@@ -28,11 +33,22 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  RotateCcw,
 } from "lucide-react";
 import { Panel } from "@/components/ui-bits";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import kalamBg from "@/assets/kalam-bg.jpg";
+
+const STAGE_COLOR: Record<string, string> = {
+  D1: "var(--chart-5)",
+  D3: "var(--chart-4)",
+  D7: "var(--chart-1)",
+  D14: "var(--chart-2)",
+  D30: "var(--chart-3)",
+  mastered: "var(--gold)",
+};
 
 export const Route = createFileRoute("/dashboard")({ component: Dashboard });
 
