@@ -382,10 +382,70 @@ function Dashboard() {
     }));
   }, [d]);
 
+  // ---------- SUBJECT MASTERY RADAR (composite: accuracy, volume, low-mistake) ----------
+  const masteryRadar = useMemo(() => {
+    if (!d) return [];
+    const maxAttempted = Math.max(
+      1,
+      ...SUBJECTS.map((s) =>
+        d.practice
+          .filter((p: any) => p.subject === s)
+          .reduce((a: number, r: any) => a + (r.attempted || 0), 0),
+      ),
+    );
+    const openMistakes = d.mistakes.filter((m: any) => !m.resolved);
+    const maxMis = Math.max(1, ...SUBJECTS.map((s) => openMistakes.filter((m: any) => m.subject === s).length));
+    return SUBJECTS.map((s) => {
+      const rows = d.practice.filter((p: any) => p.subject === s);
+      const att = rows.reduce((a: number, r: any) => a + (r.attempted || 0), 0);
+      const cor = rows.reduce((a: number, r: any) => a + (r.correct || 0), 0);
+      const accuracy = att ? Math.round((cor / att) * 100) : 0;
+      const volume = Math.round((att / maxAttempted) * 100);
+      const mis = openMistakes.filter((m: any) => m.subject === s).length;
+      const cleanliness = Math.round((1 - mis / maxMis) * 100);
+      const mockRows = d.mocks.filter((m: any) => (m as any)[s.toLowerCase()] != null);
+      const mockAvg = mockRows.length
+        ? Math.round(
+            (mockRows.reduce((a: number, r: any) => a + (r[s.toLowerCase()] || 0), 0) /
+              mockRows.length /
+              100) *
+              100,
+          )
+        : 0;
+      return { subject: s, Accuracy: accuracy, Volume: volume, Cleanliness: cleanliness, Mocks: mockAvg };
+    });
+  }, [d]);
+
+  // ---------- REVISION STAGE DISTRIBUTION ----------
+  const revisionStages = useMemo(() => {
+    if (!d) return [];
+    const order = ["D1", "D3", "D7", "D14", "D30", "mastered"];
+    const map: Record<string, number> = {};
+    for (const r of d.revisions as any[]) map[r.stage] = (map[r.stage] || 0) + 1;
+    return order
+      .filter((k) => map[k])
+      .map((k) => ({ name: k === "mastered" ? "Mastered" : k, key: k, value: map[k] }));
+  }, [d]);
+
   const loading = q.isLoading;
 
   return (
-    <div className="px-6 lg:px-10 py-8 max-w-[1400px] mx-auto space-y-6">
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Animated Kalam background */}
+      <div className="absolute inset-0 pointer-events-none -z-0">
+        <img
+          src={kalamBg}
+          alt=""
+          aria-hidden
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover opacity-[0.18] animate-kalam-drift"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/75 to-background" />
+        <div className="absolute -top-32 -left-32 size-[480px] rounded-full bg-primary/10 blur-3xl animate-pulse" />
+        <div className="absolute top-1/3 -right-40 size-[520px] rounded-full bg-gold/10 blur-3xl animate-pulse [animation-delay:1.5s]" />
+      </div>
+
+      <div className="relative px-6 lg:px-10 py-8 max-w-[1400px] mx-auto space-y-6">
       <header>
         <div className="flex items-center gap-2 text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
           <span className="size-1.5 rounded-full bg-primary animate-pulse" />
@@ -397,6 +457,10 @@ function Dashboard() {
         <p className="mt-1 text-sm text-muted-foreground max-w-xl">
           Cross-system telemetry from Practice, Mistakes, Revision, Deep Work and Mocks — unified.
         </p>
+        <blockquote className="mt-3 text-xs italic text-muted-foreground/90 border-l-2 border-gold/50 pl-3 max-w-lg">
+          “Dream, dream, dream. Dreams transform into thoughts and thoughts result in action.”
+          <span className="not-italic font-medium text-gold/80"> — Dr. A.P.J. Abdul Kalam</span>
+        </blockquote>
       </header>
 
       {/* 1. HERO METRICS */}
