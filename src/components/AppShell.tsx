@@ -17,7 +17,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const nav = [
-  { to: "/", label: "Mission Control", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/", label: "Mission Control", icon: Flame },
   { to: "/practice", label: "Practice Engine", icon: Target },
   { to: "/mistakes", label: "Error Intelligence", icon: AlertOctagon },
   { to: "/revision", label: "Revision Vault", icon: RotateCcw },
