@@ -72,6 +72,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "An elite command center for IIT-JEE preparation: deep work, error intelligence, spaced revision, mock analytics and an AI mentor.",
       },
+      { property: "og:title", content: "JEE OS — Elite Operating System for AIR < 100" },
+      { name: "twitter:title", content: "JEE OS — Elite Operating System for AIR < 100" },
+      { name: "description", content: "Apex Rank OS is an AI-powered platform for IIT-JEE aspirants to maximize rank potential." },
+      { property: "og:description", content: "Apex Rank OS is an AI-powered platform for IIT-JEE aspirants to maximize rank potential." },
+      { name: "twitter:description", content: "Apex Rank OS is an AI-powered platform for IIT-JEE aspirants to maximize rank potential." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7441f734-d472-4494-908d-15162ed40979/id-preview-24f8eb2d--869c800b-5e8c-4b29-9a15-56d086ed0183.lovable.app-1779009614660.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7441f734-d472-4494-908d-15162ed40979/id-preview-24f8eb2d--869c800b-5e8c-4b29-9a15-56d086ed0183.lovable.app-1779009614660.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
