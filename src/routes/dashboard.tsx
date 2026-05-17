@@ -19,6 +19,11 @@ import {
   LineChart,
   Line,
   ComposedChart,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
 } from "recharts";
 import {
   Activity,
@@ -28,11 +33,22 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  RotateCcw,
 } from "lucide-react";
 import { Panel } from "@/components/ui-bits";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import kalamBg from "@/assets/kalam-bg.jpg";
+
+const STAGE_COLOR: Record<string, string> = {
+  D1: "var(--chart-5)",
+  D3: "var(--chart-4)",
+  D7: "var(--chart-1)",
+  D14: "var(--chart-2)",
+  D30: "var(--chart-3)",
+  mastered: "var(--gold)",
+};
 
 export const Route = createFileRoute("/dashboard")({ component: Dashboard });
 
@@ -366,10 +382,70 @@ function Dashboard() {
     }));
   }, [d]);
 
+  // ---------- SUBJECT MASTERY RADAR (composite: accuracy, volume, low-mistake) ----------
+  const masteryRadar = useMemo(() => {
+    if (!d) return [];
+    const maxAttempted = Math.max(
+      1,
+      ...SUBJECTS.map((s) =>
+        d.practice
+          .filter((p: any) => p.subject === s)
+          .reduce((a: number, r: any) => a + (r.attempted || 0), 0),
+      ),
+    );
+    const openMistakes = d.mistakes.filter((m: any) => !m.resolved);
+    const maxMis = Math.max(1, ...SUBJECTS.map((s) => openMistakes.filter((m: any) => m.subject === s).length));
+    return SUBJECTS.map((s) => {
+      const rows = d.practice.filter((p: any) => p.subject === s);
+      const att = rows.reduce((a: number, r: any) => a + (r.attempted || 0), 0);
+      const cor = rows.reduce((a: number, r: any) => a + (r.correct || 0), 0);
+      const accuracy = att ? Math.round((cor / att) * 100) : 0;
+      const volume = Math.round((att / maxAttempted) * 100);
+      const mis = openMistakes.filter((m: any) => m.subject === s).length;
+      const cleanliness = Math.round((1 - mis / maxMis) * 100);
+      const mockRows = d.mocks.filter((m: any) => (m as any)[s.toLowerCase()] != null);
+      const mockAvg = mockRows.length
+        ? Math.round(
+            (mockRows.reduce((a: number, r: any) => a + (r[s.toLowerCase()] || 0), 0) /
+              mockRows.length /
+              100) *
+              100,
+          )
+        : 0;
+      return { subject: s, Accuracy: accuracy, Volume: volume, Cleanliness: cleanliness, Mocks: mockAvg };
+    });
+  }, [d]);
+
+  // ---------- REVISION STAGE DISTRIBUTION ----------
+  const revisionStages = useMemo(() => {
+    if (!d) return [];
+    const order = ["D1", "D3", "D7", "D14", "D30", "mastered"];
+    const map: Record<string, number> = {};
+    for (const r of d.revisions as any[]) map[r.stage] = (map[r.stage] || 0) + 1;
+    return order
+      .filter((k) => map[k])
+      .map((k) => ({ name: k === "mastered" ? "Mastered" : k, key: k, value: map[k] }));
+  }, [d]);
+
   const loading = q.isLoading;
 
   return (
-    <div className="px-6 lg:px-10 py-8 max-w-[1400px] mx-auto space-y-6">
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Animated Kalam background */}
+      <div className="absolute inset-0 pointer-events-none -z-0">
+        <img
+          src={kalamBg}
+          alt=""
+          aria-hidden
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover opacity-[0.18] animate-kalam-drift"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/75 to-background" />
+        <div className="absolute -top-32 -left-32 size-[480px] rounded-full bg-primary/10 blur-3xl animate-pulse" />
+        <div className="absolute top-1/3 -right-40 size-[520px] rounded-full bg-gold/10 blur-3xl animate-pulse [animation-delay:1.5s]" />
+      </div>
+
+      <div className="relative px-6 lg:px-10 py-8 max-w-[1400px] mx-auto space-y-6">
       <header>
         <div className="flex items-center gap-2 text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
           <span className="size-1.5 rounded-full bg-primary animate-pulse" />
@@ -381,6 +457,10 @@ function Dashboard() {
         <p className="mt-1 text-sm text-muted-foreground max-w-xl">
           Cross-system telemetry from Practice, Mistakes, Revision, Deep Work and Mocks — unified.
         </p>
+        <blockquote className="mt-3 text-xs italic text-muted-foreground/90 border-l-2 border-gold/50 pl-3 max-w-lg">
+          “Dream, dream, dream. Dreams transform into thoughts and thoughts result in action.”
+          <span className="not-italic font-medium text-gold/80"> — Dr. A.P.J. Abdul Kalam</span>
+        </blockquote>
       </header>
 
       {/* 1. HERO METRICS */}
@@ -593,6 +673,62 @@ function Dashboard() {
           </ResponsiveContainer>
         )}
       </Panel>
+
+      {/* 6. SUBJECT MASTERY RADAR + REVISION STAGES */}
+      <section className="grid lg:grid-cols-2 gap-6">
+        <Panel title="Subject Mastery Radar" subtitle="Composite signal across 4 axes" accent="cyan">
+          {loading ? (
+            <ChartSkeleton />
+          ) : masteryRadar.every((m) => m.Accuracy + m.Volume + m.Cleanliness + m.Mocks === 0) ? (
+            <EmptyState msg="Log practice / mocks to populate radar." />
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <RadarChart data={masteryRadar} outerRadius="78%">
+                <PolarGrid stroke="oklch(1 0 0 / 10%)" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: "oklch(0.75 0.02 250)", fontSize: 12 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "oklch(0.55 0.02 250)", fontSize: 10 }} stroke="oklch(1 0 0 / 10%)" />
+                <Radar name="Accuracy" dataKey="Accuracy" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.25} />
+                <Radar name="Volume" dataKey="Volume" stroke="var(--chart-3)" fill="var(--chart-3)" fillOpacity={0.2} />
+                <Radar name="Cleanliness" dataKey="Cleanliness" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.18} />
+                <Radar name="Mocks" dataKey="Mocks" stroke="var(--chart-5)" fill="var(--chart-5)" fillOpacity={0.18} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                <Tooltip contentStyle={tooltipStyle} />
+              </RadarChart>
+            </ResponsiveContainer>
+          )}
+        </Panel>
+
+        <Panel title="Revision Stage Distribution" subtitle="Spaced-repetition pipeline (D1 → Mastered)" accent="gold">
+          {loading ? (
+            <ChartSkeleton />
+          ) : revisionStages.length === 0 ? (
+            <EmptyState msg="No revision topics queued yet." />
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={revisionStages}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={55}
+                  outerRadius={110}
+                  paddingAngle={2}
+                  stroke="oklch(0.185 0.014 250)"
+                  strokeWidth={2}
+                  label={{ fontSize: 11, fill: "oklch(0.85 0.005 250)" }}
+                >
+                  {revisionStages.map((e) => (
+                    <Cell key={e.key} fill={STAGE_COLOR[e.key] ?? "var(--chart-1)"} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </Panel>
+      </section>
+      </div>
     </div>
   );
 }
