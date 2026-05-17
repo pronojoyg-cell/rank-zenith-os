@@ -673,6 +673,62 @@ function Dashboard() {
           </ResponsiveContainer>
         )}
       </Panel>
+
+      {/* 6. SUBJECT MASTERY RADAR + REVISION STAGES */}
+      <section className="grid lg:grid-cols-2 gap-6">
+        <Panel title="Subject Mastery Radar" subtitle="Composite signal across 4 axes" accent="cyan">
+          {loading ? (
+            <ChartSkeleton />
+          ) : masteryRadar.every((m) => m.Accuracy + m.Volume + m.Cleanliness + m.Mocks === 0) ? (
+            <EmptyState msg="Log practice / mocks to populate radar." />
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <RadarChart data={masteryRadar} outerRadius="78%">
+                <PolarGrid stroke="oklch(1 0 0 / 10%)" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: "oklch(0.75 0.02 250)", fontSize: 12 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "oklch(0.55 0.02 250)", fontSize: 10 }} stroke="oklch(1 0 0 / 10%)" />
+                <Radar name="Accuracy" dataKey="Accuracy" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.25} />
+                <Radar name="Volume" dataKey="Volume" stroke="var(--chart-3)" fill="var(--chart-3)" fillOpacity={0.2} />
+                <Radar name="Cleanliness" dataKey="Cleanliness" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.18} />
+                <Radar name="Mocks" dataKey="Mocks" stroke="var(--chart-5)" fill="var(--chart-5)" fillOpacity={0.18} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                <Tooltip contentStyle={tooltipStyle} />
+              </RadarChart>
+            </ResponsiveContainer>
+          )}
+        </Panel>
+
+        <Panel title="Revision Stage Distribution" subtitle="Spaced-repetition pipeline (D1 → Mastered)" accent="gold">
+          {loading ? (
+            <ChartSkeleton />
+          ) : revisionStages.length === 0 ? (
+            <EmptyState msg="No revision topics queued yet." />
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={revisionStages}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={55}
+                  outerRadius={110}
+                  paddingAngle={2}
+                  stroke="oklch(0.185 0.014 250)"
+                  strokeWidth={2}
+                  label={{ fontSize: 11, fill: "oklch(0.85 0.005 250)" }}
+                >
+                  {revisionStages.map((e) => (
+                    <Cell key={e.key} fill={STAGE_COLOR[e.key] ?? "var(--chart-1)"} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </Panel>
+      </section>
+      </div>
     </div>
   );
 }
