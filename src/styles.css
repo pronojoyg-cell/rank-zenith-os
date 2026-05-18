@@ -200,6 +200,41 @@
 
 .animate-kalam-drift {
   animation: kalam-drift 28s ease-in-out infinite;
-  will-change: transform;
-  filter: saturate(1.05) contrast(1.02);
+/* ---------- Tooltip hover scale ---------- */
+@keyframes tooltip-pop {
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ---------- Staggered chart entry (GPU-only) ---------- */
+@keyframes chart-enter {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-chart-enter {
+  animation: chart-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+
+.animate-tooltip-pop {
+  animation: tooltip-pop 0.18s ease-out both;
+}
+
+/* Stagger delays for dashboard cards */
+.delay-100 { animation-delay: 0.10s; }
+.delay-200 { animation-delay: 0.20s; }
+.delay-300 { animation-delay: 0.30s; }
+.delay-400 { animation-delay: 0.40s; }
+.delay-500 { animation-delay: 0.50s; }
+.delay-600 { animation-delay: 0.60s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-chart-enter,
+  .animate-tooltip-pop,
+  .animate-kalam-drift {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
