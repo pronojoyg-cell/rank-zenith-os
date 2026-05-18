@@ -679,7 +679,7 @@ function Dashboard() {
       </div>
 
       {/* 6. SUBJECT MASTERY RADAR + REVISION STAGES */}
-      <section className="grid lg:grid-cols-2 gap-6">
+      <section className="grid lg:grid-cols-2 gap-6 animate-chart-enter delay-600">
         <Panel title="Subject Mastery Radar" subtitle="Composite signal across 4 axes" accent="cyan">
           {loading ? (
             <ChartSkeleton />
