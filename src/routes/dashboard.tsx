@@ -608,6 +608,7 @@ function Dashboard() {
       </section>
 
       {/* 4. DEEP WORK VELOCITY */}
+      <div className="animate-chart-enter delay-400">
       <Panel title="Deep Work Velocity" subtitle="7-day focus hours + distraction density" accent="cyan">
         {loading ? (
           <ChartSkeleton />
