@@ -504,7 +504,7 @@ function Dashboard() {
       </section>
 
       {/* 2. PRACTICE & DIFFICULTY MATRIX */}
-      <section className="grid lg:grid-cols-2 gap-6">
+      <section className="grid lg:grid-cols-2 gap-6 animate-chart-enter delay-200">
         <Panel title="Subject-Wise Accuracy" subtitle="vs 80% topper benchmark" accent="cyan">
           {loading ? (
             <ChartSkeleton />
