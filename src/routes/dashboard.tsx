@@ -464,7 +464,7 @@ function Dashboard() {
       </header>
 
       {/* 1. HERO METRICS */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-chart-enter delay-100">
         <MetricCard
           label="Focus Velocity"
           value={`${hero.focusHours.toFixed(1)}h`}
