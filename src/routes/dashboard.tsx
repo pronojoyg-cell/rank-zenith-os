@@ -655,6 +655,7 @@ function Dashboard() {
       </div>
 
       {/* 5. MOCK TRAJECTORY */}
+      <div className="animate-chart-enter delay-500">
       <Panel title="Mock War Room Trajectory" subtitle="Subject scores over time" accent="gold">
         {loading ? (
           <ChartSkeleton />
