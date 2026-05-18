@@ -652,6 +652,7 @@ function Dashboard() {
           </ResponsiveContainer>
         )}
       </Panel>
+      </div>
 
       {/* 5. MOCK TRAJECTORY */}
       <Panel title="Mock War Room Trajectory" subtitle="Subject scores over time" accent="gold">
