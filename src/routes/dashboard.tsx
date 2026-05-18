@@ -676,6 +676,7 @@ function Dashboard() {
           </ResponsiveContainer>
         )}
       </Panel>
+      </div>
 
       {/* 6. SUBJECT MASTERY RADAR + REVISION STAGES */}
       <section className="grid lg:grid-cols-2 gap-6">
