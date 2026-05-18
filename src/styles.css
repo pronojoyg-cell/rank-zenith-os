@@ -242,3 +242,33 @@
     transform: none !important;
   }
 }
+
+/* ---------- Chart tooltip + hover transitions ---------- */
+.recharts-tooltip-wrapper {
+  transition: transform 0.12s ease-out, opacity 0.12s ease-out !important;
+}
+
+.recharts-default-tooltip {
+  animation: tooltip-pop 0.18s ease-out both;
+}
+
+/* Interactive chart elements */
+.recharts-bar-rectangle,
+.recharts-pie-sector,
+.recharts-radar-polygon,
+.recharts-line-dot {
+  transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+  transform-origin: center;
+}
+
+.recharts-bar:hover .recharts-bar-rectangle,
+.recharts-pie-sector:hover,
+.recharts-line-dot:hover,
+.recharts-active-dot {
+  transform: scale(1.06);
+}
+
+.recharts-pie-sector:hover {
+  transform: scale(1.04);
+}
+
