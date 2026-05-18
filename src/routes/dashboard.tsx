@@ -464,7 +464,7 @@ function Dashboard() {
       </header>
 
       {/* 1. HERO METRICS */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-chart-enter delay-100">
         <MetricCard
           label="Focus Velocity"
           value={`${hero.focusHours.toFixed(1)}h`}
@@ -504,7 +504,7 @@ function Dashboard() {
       </section>
 
       {/* 2. PRACTICE & DIFFICULTY MATRIX */}
-      <section className="grid lg:grid-cols-2 gap-6">
+      <section className="grid lg:grid-cols-2 gap-6 animate-chart-enter delay-200">
         <Panel title="Subject-Wise Accuracy" subtitle="vs 80% topper benchmark" accent="cyan">
           {loading ? (
             <ChartSkeleton />
@@ -548,7 +548,7 @@ function Dashboard() {
       </section>
 
       {/* 3. ERROR INTELLIGENCE */}
-      <section className="grid lg:grid-cols-2 gap-6">
+      <section className="grid lg:grid-cols-2 gap-6 animate-chart-enter delay-300">
         <Panel title="Root Cause Leakage" subtitle="Where marks are bleeding" accent="red">
           {loading ? (
             <ChartSkeleton />
@@ -608,6 +608,7 @@ function Dashboard() {
       </section>
 
       {/* 4. DEEP WORK VELOCITY */}
+      <div className="animate-chart-enter delay-400">
       <Panel title="Deep Work Velocity" subtitle="7-day focus hours + distraction density" accent="cyan">
         {loading ? (
           <ChartSkeleton />
@@ -651,8 +652,10 @@ function Dashboard() {
           </ResponsiveContainer>
         )}
       </Panel>
+      </div>
 
       {/* 5. MOCK TRAJECTORY */}
+      <div className="animate-chart-enter delay-500">
       <Panel title="Mock War Room Trajectory" subtitle="Subject scores over time" accent="gold">
         {loading ? (
           <ChartSkeleton />
@@ -673,9 +676,10 @@ function Dashboard() {
           </ResponsiveContainer>
         )}
       </Panel>
+      </div>
 
       {/* 6. SUBJECT MASTERY RADAR + REVISION STAGES */}
-      <section className="grid lg:grid-cols-2 gap-6">
+      <section className="grid lg:grid-cols-2 gap-6 animate-chart-enter delay-600">
         <Panel title="Subject Mastery Radar" subtitle="Composite signal across 4 axes" accent="cyan">
           {loading ? (
             <ChartSkeleton />
