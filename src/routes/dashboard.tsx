@@ -548,7 +548,7 @@ function Dashboard() {
       </section>
 
       {/* 3. ERROR INTELLIGENCE */}
-      <section className="grid lg:grid-cols-2 gap-6">
+      <section className="grid lg:grid-cols-2 gap-6 animate-chart-enter delay-300">
         <Panel title="Root Cause Leakage" subtitle="Where marks are bleeding" accent="red">
           {loading ? (
             <ChartSkeleton />
