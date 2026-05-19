@@ -11,6 +11,8 @@ import {
   Flame,
   LogOut,
   Menu,
+  Swords,
+  MessageCircle,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -27,6 +29,8 @@ const nav = [
   { to: "/revision", label: "Revision Vault", icon: RotateCcw },
   { to: "/focus", label: "Deep Work", icon: Timer },
   { to: "/mocks", label: "Mock War Room", icon: Trophy },
+  { to: "/compete", label: "Compete", icon: Swords },
+  { to: "/chat", label: "OS Chat", icon: MessageCircle },
   { to: "/mentor", label: "AI Mentor", icon: Brain },
 ] as const;
 

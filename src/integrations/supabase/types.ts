@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_rooms: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_group: boolean
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_group?: boolean
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_group?: boolean
+          name?: string | null
+        }
+        Relationships: []
+      }
+      connections: {
+        Row: {
+          created_at: string
+          id: string
+          receiver_id: string
+          sender_id: string
+          status: Database["public"]["Enums"]["connection_status_t"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          receiver_id: string
+          sender_id: string
+          status?: Database["public"]["Enums"]["connection_status_t"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          receiver_id?: string
+          sender_id?: string
+          status?: Database["public"]["Enums"]["connection_status_t"]
+        }
+        Relationships: []
+      }
       daily_tasks: {
         Row: {
           created_at: string
@@ -103,6 +151,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      messages: {
+        Row: {
+          created_at: string
+          deleted_by_users: string[]
+          deleted_for_everyone: boolean
+          id: string
+          message_text: string
+          room_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_by_users?: string[]
+          deleted_for_everyone?: boolean
+          id?: string
+          message_text: string
+          room_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string
+          deleted_by_users?: string[]
+          deleted_for_everyone?: boolean
+          id?: string
+          message_text?: string
+          room_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mistakes: {
         Row: {
@@ -239,24 +325,36 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          current_streak: number
           display_name: string | null
           exam_date: string | null
           id: string
+          is_incognito: boolean
+          last_activity_date: string | null
           target_air: number | null
+          total_points: number
         }
         Insert: {
           created_at?: string
+          current_streak?: number
           display_name?: string | null
           exam_date?: string | null
           id: string
+          is_incognito?: boolean
+          last_activity_date?: string | null
           target_air?: number | null
+          total_points?: number
         }
         Update: {
           created_at?: string
+          current_streak?: number
           display_name?: string | null
           exam_date?: string | null
           id?: string
+          is_incognito?: boolean
+          last_activity_date?: string | null
           target_air?: number | null
+          total_points?: number
         }
         Relationships: []
       }
@@ -296,9 +394,58 @@ export type Database = {
         }
         Relationships: []
       }
+      room_members: {
+        Row: {
+          joined_at: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          joined_at?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          joined_at?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_members_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      leaderboard_public: {
+        Row: {
+          current_streak: number | null
+          display_name: string | null
+          id: string | null
+          target_air: number | null
+          total_points: number | null
+        }
+        Insert: {
+          current_streak?: number | null
+          display_name?: string | null
+          id?: string | null
+          target_air?: number | null
+          total_points?: number | null
+        }
+        Update: {
+          current_streak?: number | null
+          display_name?: string | null
+          id?: string | null
+          target_air?: number | null
+          total_points?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       advance_revision: {
@@ -321,8 +468,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_or_create_dm: { Args: { _peer: string }; Returns: string }
+      is_room_member: {
+        Args: { _room: string; _user: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      connection_status_t: "pending" | "accepted" | "blocked"
       difficulty_t: "easy" | "medium" | "hard" | "advanced"
       mistake_t: "silly" | "concept" | "calculation" | "time" | "misread"
       rev_stage_t: "D1" | "D3" | "D7" | "D14" | "D30" | "mastered"
@@ -454,6 +607,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      connection_status_t: ["pending", "accepted", "blocked"],
       difficulty_t: ["easy", "medium", "hard", "advanced"],
       mistake_t: ["silly", "concept", "calculation", "time", "misread"],
       rev_stage_t: ["D1", "D3", "D7", "D14", "D30", "mastered"],
