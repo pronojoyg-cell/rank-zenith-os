@@ -16,6 +16,8 @@ import { Route as MistakesRouteImport } from './routes/mistakes'
 import { Route as MentorRouteImport } from './routes/mentor'
 import { Route as FocusRouteImport } from './routes/focus'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CompeteRouteImport } from './routes/compete'
+import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiMentorRouteImport } from './routes/api/mentor'
@@ -55,6 +57,16 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompeteRoute = CompeteRouteImport.update({
+  id: '/compete',
+  path: '/compete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -74,6 +86,8 @@ const ApiMentorRoute = ApiMentorRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/chat': typeof ChatRoute
+  '/compete': typeof CompeteRoute
   '/dashboard': typeof DashboardRoute
   '/focus': typeof FocusRoute
   '/mentor': typeof MentorRoute
@@ -86,6 +100,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/chat': typeof ChatRoute
+  '/compete': typeof CompeteRoute
   '/dashboard': typeof DashboardRoute
   '/focus': typeof FocusRoute
   '/mentor': typeof MentorRoute
@@ -99,6 +115,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/chat': typeof ChatRoute
+  '/compete': typeof CompeteRoute
   '/dashboard': typeof DashboardRoute
   '/focus': typeof FocusRoute
   '/mentor': typeof MentorRoute
@@ -113,6 +131,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/chat'
+    | '/compete'
     | '/dashboard'
     | '/focus'
     | '/mentor'
@@ -125,6 +145,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/chat'
+    | '/compete'
     | '/dashboard'
     | '/focus'
     | '/mentor'
@@ -137,6 +159,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/chat'
+    | '/compete'
     | '/dashboard'
     | '/focus'
     | '/mentor'
@@ -150,6 +174,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  ChatRoute: typeof ChatRoute
+  CompeteRoute: typeof CompeteRoute
   DashboardRoute: typeof DashboardRoute
   FocusRoute: typeof FocusRoute
   MentorRoute: typeof MentorRoute
@@ -211,6 +237,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compete': {
+      id: '/compete'
+      path: '/compete'
+      fullPath: '/compete'
+      preLoaderRoute: typeof CompeteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -238,6 +278,8 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  ChatRoute: ChatRoute,
+  CompeteRoute: CompeteRoute,
   DashboardRoute: DashboardRoute,
   FocusRoute: FocusRoute,
   MentorRoute: MentorRoute,
