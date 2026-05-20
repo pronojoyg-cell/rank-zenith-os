@@ -40,6 +40,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import kalamBg from "@/assets/kalam-bg.jpg";
+import { DevAnalyticsView } from "@/components/DevAnalyticsView";
+
+const DEVELOPER_EMAIL = "your-actual-gmail@gmail.com";
 
 const STAGE_COLOR: Record<string, string> = {
   D1: "var(--chart-5)",
@@ -463,7 +466,14 @@ function Dashboard() {
         </blockquote>
       </header>
 
+      {user?.email === DEVELOPER_EMAIL && (
+        <section className="animate-chart-enter">
+          <DevAnalyticsView />
+        </section>
+      )}
+
       {/* 1. HERO METRICS */}
+
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-chart-enter delay-100">
         <MetricCard
           label="Focus Velocity"
