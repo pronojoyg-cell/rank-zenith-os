@@ -42,7 +42,7 @@ import { useAuth } from "@/hooks/useAuth";
 import kalamBg from "@/assets/kalam-bg.jpg";
 import { DevAnalyticsView } from "@/components/DevAnalyticsView";
 
-const DEVELOPER_EMAIL = "your-actual-gmail@gmail.com";
+const DEVELOPER_EMAIL = "pronojoyg@gmail.com";
 
 const STAGE_COLOR: Record<string, string> = {
   D1: "var(--chart-5)",
