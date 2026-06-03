@@ -113,9 +113,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function Gate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const { pathname } = useLocation();
-  const isGuest = typeof window !== "undefined" && localStorage.getItem("guest_mode") === "1";
 
-  if (pathname === "/auth") return <>{children}</>;
+  if (pathname === "/auth" || pathname === "/chat") return <>{children}</>;
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -123,7 +122,7 @@ function Gate({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  if (!user && !isGuest) {
+  if (!user) {
     if (typeof window !== "undefined") window.location.replace("/auth");
     return null;
   }

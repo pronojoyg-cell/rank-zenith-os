@@ -2,8 +2,6 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Target,
-  AlertOctagon,
-  RotateCcw,
   Timer,
   FlaskConical,
   Brain,
@@ -26,8 +24,6 @@ const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/", label: "Mission Control", icon: Flame },
   { to: "/practice", label: "Practice Engine", icon: Target },
-  { to: "/mistakes", label: "Error Intelligence", icon: AlertOctagon },
-  { to: "/revision", label: "Revision Vault", icon: RotateCcw },
   { to: "/focus", label: "Deep Work", icon: Timer },
   { to: "/mocks", label: "Mock War Room", icon: Trophy },
   { to: "/compete", label: "Compete", icon: Swords },
