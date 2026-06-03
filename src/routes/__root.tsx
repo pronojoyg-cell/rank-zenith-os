@@ -114,17 +114,13 @@ function Gate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const { pathname } = useLocation();
 
-  if (pathname === "/auth" || pathname === "/chat") return <>{children}</>;
+  if (pathname === "/auth") return <>{children}</>;
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center text-xs uppercase tracking-[0.18em] text-muted-foreground">
         Loading…
       </div>
     );
-  }
-  if (!user) {
-    if (typeof window !== "undefined") window.location.replace("/auth");
-    return null;
   }
   return <AppShell>{children}</AppShell>;
 }
