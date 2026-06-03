@@ -37,6 +37,14 @@ function AuthPage() {
     }
   };
 
+  const [guestName, setGuestName] = useState("");
+  const enterGuest = () => {
+    const n = guestName.trim() || "Guest";
+    localStorage.setItem("guest_mode", "1");
+    localStorage.setItem("guest_name", n);
+    navigate({ to: "/" });
+  };
+
   return (
     <div className="min-h-screen grid place-items-center px-4">
       <form onSubmit={submit} className="w-full max-w-sm glass-panel rounded-2xl p-7 space-y-5">
@@ -69,9 +77,32 @@ function AuthPage() {
         >
           {busy ? "Starting…" : "Enter Command Center"}
         </button>
-        <p className="text-[10.5px] text-center text-muted-foreground">
-          No password. No email. Your progress stays on this device.
-        </p>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border/60" /></div>
+          <div className="relative flex justify-center text-[10.5px] uppercase tracking-wider">
+            <span className="bg-background px-3 text-muted-foreground">or</span>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <input
+            value={guestName}
+            onChange={(e) => setGuestName(e.target.value)}
+            placeholder="Enter guest name (optional)"
+            className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border focus:border-primary outline-none text-sm"
+          />
+          <button
+            type="button"
+            onClick={enterGuest}
+            className="w-full py-2.5 rounded-lg border border-border bg-surface text-foreground font-medium text-sm hover:bg-surface-2 transition"
+          >
+            Continue as Guest
+          </button>
+          <p className="text-[10px] text-center text-muted-foreground/60">
+            Guest mode is local-only. Data won&apos;t sync to the cloud.
+          </p>
+        </div>
       </form>
     </div>
   );

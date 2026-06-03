@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const nav = [
+  { to: "/chat", label: "Chat with Peers", icon: MessageCircle },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/", label: "Mission Control", icon: Flame },
   { to: "/practice", label: "Practice Engine", icon: Target },
@@ -30,7 +31,6 @@ const nav = [
   { to: "/focus", label: "Deep Work", icon: Timer },
   { to: "/mocks", label: "Mock War Room", icon: Trophy },
   { to: "/compete", label: "Compete", icon: Swords },
-  { to: "/chat", label: "OS Chat", icon: MessageCircle },
   { to: "/mentor", label: "AI Mentor", icon: Brain },
 ] as const;
 

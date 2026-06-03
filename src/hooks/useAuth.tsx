@@ -7,15 +7,24 @@ type Ctx = {
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  isGuest: boolean;
+  guestName: string | null;
 };
 
-const AuthCtx = createContext<Ctx>({ user: null, session: null, loading: true, signOut: async () => {} });
+const AuthCtx = createContext<Ctx>({ user: null, session: null, loading: true, signOut: async () => {}, isGuest: false, guestName: null });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
+  const [guestName, setGuestName] = useState<string | null>(null);
 
   useEffect(() => {
+    const g = localStorage.getItem("guest_mode") === "1";
+    const gn = localStorage.getItem("guest_name");
+    setIsGuest(g);
+    setGuestName(gn);
+
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       setLoading(false);
@@ -27,13 +36,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  const user = session?.user ?? null;
+  const guestUser = isGuest ? ({ id: "guest", email: guestName || "Guest", user_metadata: {} } as User) : null;
+
   return (
     <AuthCtx.Provider
       value={{
         session,
-        user: session?.user ?? null,
-        loading,
+        user: user ?? guestUser,
+        loading: isGuest ? false : loading,
+        isGuest,
+        guestName,
         signOut: async () => {
+          localStorage.removeItem("guest_mode");
+          localStorage.removeItem("guest_name");
           await supabase.auth.signOut();
         },
       }}
