@@ -174,17 +174,6 @@ function AuthPage() {
             </div>
           )}
 
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border/40" /></div>
-            <div className="relative flex justify-center text-[10.5px] uppercase tracking-wider"><span className="bg-surface px-3 text-muted-foreground">or</span></div>
-          </div>
-
-          {/* Anonymous */}
-          <button onClick={async () => { setBusy(true); const { data, error } = await supabase.auth.signInAnonymously(); if (error) { toast.error(error.message); } else if (data.user) { toast.success("Welcome!"); } setBusy(false); }} disabled={busy} className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-dashed border-border hover:border-primary/40 hover:bg-primary/5 transition text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-50">
-            <User className="size-4" />
-            Continue Anonymously
-          </button>
         </div>
 
         {/* Footer */}
