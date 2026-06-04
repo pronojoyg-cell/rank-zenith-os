@@ -127,26 +127,11 @@ type Community = {
   verified: boolean;
 };
 
-const DEFAULT_CLIP_GROUPS = [
-  { id: "g1", name: "JEE 2025 — Physics Grind", last: "Rohan: Anyone solved SHM problem 47?", time: "2m", unread: 5, members: 48, avatar: "P", color: "from-blue-500 to-cyan-500" },
-  { id: "g2", name: "Organic Chem Warriors", last: "You: Check this mechanism 🧪", time: "18m", unread: 0, members: 31, avatar: "C", color: "from-green-500 to-emerald-500" },
-  { id: "g3", name: "Maths Integration Club", last: "Priya: By-parts trick for ln(x)", time: "1h", unread: 12, members: 62, avatar: "M", color: "from-purple-500 to-pink-500" },
-  { id: "g4", name: "AIR < 100 Aspirants", last: "Vikram: 14hrs today 🔥", time: "3h", unread: 0, members: 19, avatar: "A", color: "from-orange-500 to-red-500" },
-];
+const DEFAULT_CLIP_GROUPS: Array<{ id: string; name: string; last: string; time: string; unread: number; members: number; avatar: string; color: string }> = [];
 
-const DEMO_CLIPS = [
-  { id: "c1", user: "Aryan Sharma", handle: "@aryanjee25", avatar: "A", color: "from-blue-500 to-cyan-500", caption: "Solved this optics problem in 90 seconds using the mirror formula trick 🪞✨ #JEE2025 #Physics", likes: 847, comments: 63, shares: 124, views: "12.4K", time: "3m ago", hasVideo: true, topic: "Physics", topicColor: "text-blue-400 bg-blue-400/10" },
-  { id: "c2", user: "Meera Patel", handle: "@meerachemsit", avatar: "M", color: "from-green-500 to-teal-500", caption: "The BEST way to memorize hybridization states — my colour-coded notes system 📝🎨 Drop a ❤️ if this helped!", likes: 2341, comments: 189, shares: 412, views: "38.7K", time: "47m ago", hasVideo: true, topic: "Chemistry", topicColor: "text-green-400 bg-green-400/10" },
-  { id: "c3", user: "Rohan Gupta", handle: "@rohangupta_iit", avatar: "R", color: "from-purple-500 to-pink-500", caption: "Day 312 of JEE prep. Mock score today: 287/300. The grind never stops 💪 #JEE2025 #Maths", likes: 5812, comments: 321, shares: 891, views: "94.2K", time: "2h ago", hasVideo: false, topic: "Maths", topicColor: "text-purple-400 bg-purple-400/10" },
-  { id: "c4", user: "Siya Verma", handle: "@siyaverma_jee", avatar: "S", color: "from-orange-500 to-yellow-500", caption: "Rotational mechanics made easy — this single diagram covers 80% of JEE questions on the topic. Save this! 🔄", likes: 3129, comments: 244, shares: 678, views: "51.1K", time: "4h ago", hasVideo: true, topic: "Physics", topicColor: "text-blue-400 bg-blue-400/10" },
-];
+const DEMO_CLIPS: Array<{ id: string; user: string; handle: string; avatar: string; color: string; caption: string; likes: number; comments: number; shares: number; views: string; time: string; hasVideo: boolean; topic: string; topicColor: string }> = [];
 
-const DEMO_COMMUNITIES: Community[] = [
-  { id: "com1", name: "JEE Advanced 2025", desc: "Official study community for JEE Advanced aspirants. Share notes, strategies & doubts.", members: 24800, avatar: "J", color: "from-primary to-chart-4", channels: ["announcements", "physics", "chemistry", "maths", "doubts", "motivation"], joined: true, verified: true },
-  { id: "com2", name: "IIT Delhi — Admits 2025", desc: "For students who got into IIT Delhi or are aiming for it. Connect before joining.", members: 8200, avatar: "D", color: "from-blue-500 to-indigo-500", channels: ["general", "hostel-life", "branch-advice", "memes"], joined: true, verified: true },
-  { id: "com3", name: "Fiitjee Students Hub", desc: "All Fiitjee students — share notes, test papers, and batch experiences here.", members: 41300, avatar: "F", color: "from-green-500 to-emerald-500", channels: ["general", "test-papers", "teacher-notes", "results"], joined: false, verified: false },
-  { id: "com4", name: "Night Owls Study Club", desc: "For those who study past midnight. 11PM–4AM study sessions with daily check-ins.", members: 6700, avatar: "N", color: "from-indigo-500 to-purple-500", channels: ["check-in", "focus-room", "break-chat", "streaks"], joined: false, verified: false },
-];
+const DEMO_COMMUNITIES: Community[] = [];
 
 function Avatar({ name, size = 36, gradient }: { name?: string | null; size?: number; gradient?: string }) {
   return (

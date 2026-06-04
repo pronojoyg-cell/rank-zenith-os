@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { FeedbackButton } from "@/components/FeedbackButton";
 
 const nav = [
   { to: "/chat", label: "Chat with Peers", icon: MessageCircle },
@@ -117,6 +118,14 @@ function SidebarContent({
   );
 }
 
+function DesktopTopBar() {
+  return (
+    <div className="hidden lg:flex sticky top-0 z-30 items-center justify-end gap-2 px-6 h-12 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+      <FeedbackButton />
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { user, signOut } = useAuth();
@@ -196,6 +205,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
 
           <div className="ml-auto flex items-center gap-2">
+            <FeedbackButton compact />
             <div className="text-right leading-tight hidden sm:block">
               <div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Target</div>
               <div className="text-xs font-semibold text-gradient-gold">&lt; {profile?.target_air ?? 100}</div>
@@ -205,6 +215,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </div>
         </header>
+
+        <DesktopTopBar />
 
         <div className="flex-1 min-w-0 pb-[env(safe-area-inset-bottom)]">{children}</div>
       </main>

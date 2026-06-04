@@ -25,11 +25,26 @@ function AuthPage() {
 
   const signInWithGoogle = async () => {
     setBusy(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
-    });
-    if (error) { toast.error(error.message); setBusy(false); }
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        // Trigger navigation in the same user-gesture stack so mobile
+        // browsers (Safari/Chrome iOS) don't block the redirect.
+        window.location.assign(data.url);
+        return;
+      }
+      throw new Error("Could not start Google sign-in.");
+    } catch (e: any) {
+      toast.error(e.message ?? "Sign-in failed");
+      setBusy(false);
+    }
   };
 
   const signInWithEmail = async () => {
@@ -159,33 +174,11 @@ function AuthPage() {
             </div>
           )}
 
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border/40" /></div>
-            <div className="relative flex justify-center text-[10.5px] uppercase tracking-wider"><span className="bg-surface px-3 text-muted-foreground">or</span></div>
-          </div>
-
-          {/* Anonymous */}
-          <button onClick={async () => { setBusy(true); const { data, error } = await supabase.auth.signInAnonymously(); if (error) { toast.error(error.message); } else if (data.user) { toast.success("Welcome!"); } setBusy(false); }} disabled={busy} className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-dashed border-border hover:border-primary/40 hover:bg-primary/5 transition text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-50">
-            <User className="size-4" />
-            Continue Anonymously
-          </button>
         </div>
 
-        {/* Footer stats */}
-        <div className="mt-8 grid grid-cols-3 gap-3 text-center">
-          <div className="p-3 rounded-xl bg-surface/40 border border-border/30">
-            <div className="text-lg font-bold text-primary">12.5K</div>
-            <div className="text-[10.5px] text-muted-foreground">Active Aspirants</div>
-          </div>
-          <div className="p-3 rounded-xl bg-surface/40 border border-border/30">
-            <div className="text-lg font-bold text-chart-4">2.4K</div>
-            <div className="text-[10.5px] text-muted-foreground">Study Groups</div>
-          </div>
-          <div className="p-3 rounded-xl bg-surface/40 border border-border/30">
-            <div className="text-lg font-bold text-chart-3">48K</div>
-            <div className="text-[10.5px] text-muted-foreground">Messages/Day</div>
-          </div>
+        {/* Footer */}
+        <div className="mt-8 text-center text-[11px] text-muted-foreground/70">
+          By continuing you agree to our terms. Secure & encrypted.
         </div>
       </div>
     </div>
