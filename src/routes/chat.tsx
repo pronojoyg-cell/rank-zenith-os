@@ -620,7 +620,7 @@ function ChatPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [signedIn, setSignedIn] = useState(false);
-  const [demoMessages, setDemoMessages] = useState<Msg[]>(demoChatMessages);
+  const [demoMessages, setDemoMessages] = useState<Msg[]>(demoChatMessages as Msg[]);
 
   useEffect(() => {
     if (user || isDemo) setSignedIn(true);

@@ -149,6 +149,7 @@ function DesktopTopBar({ showModeSwitch }: { showModeSwitch: boolean }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { user, signOut } = useAuth();
+  const { isDemo } = useDataMode();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -161,7 +162,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     },
   });
 
-  const examDate = profile?.exam_date ? new Date(profile.exam_date) : null;
+  const displayProfile = isDemo
+    ? { display_name: "Demo Aspirant", target_air: 100, exam_date: new Date(Date.now() + 180 * 86400000).toISOString() }
+    : profile;
+  const examDate = displayProfile?.exam_date ? new Date(displayProfile.exam_date) : null;
   const daysToExam = examDate
     ? Math.max(0, Math.ceil((examDate.getTime() - Date.now()) / 86400000))
     : null;
@@ -180,7 +184,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border/60 bg-surface/40 backdrop-blur-xl sticky top-0 h-screen">
         <SidebarContent
           pathname={pathname}
-          profile={profile}
+          profile={displayProfile}
           user={user}
           daysToExam={daysToExam}
           onSignOut={handleSignOut}
@@ -202,7 +206,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <SheetContent side="left" className="p-0 w-[85vw] max-w-[320px] flex flex-col bg-surface/95 backdrop-blur-xl border-border/60">
               <SidebarContent
                 pathname={pathname}
-                profile={profile}
+                profile={displayProfile}
                 user={user}
                 daysToExam={daysToExam}
                 onSignOut={handleSignOut}
@@ -230,10 +234,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             <FeedbackButton compact />
             <div className="text-right leading-tight hidden sm:block">
               <div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Target</div>
-              <div className="text-xs font-semibold text-gradient-gold">&lt; {profile?.target_air ?? 100}</div>
+               <div className="text-xs font-semibold text-gradient-gold">&lt; {displayProfile?.target_air ?? 100}</div>
             </div>
             <div className="size-8 rounded-full bg-gradient-to-br from-primary to-chart-4 grid place-items-center text-xs font-semibold text-primary-foreground">
-              {(profile?.display_name ?? user?.email ?? "?").slice(0, 1).toUpperCase()}
+              {(displayProfile?.display_name ?? user?.email ?? "?").slice(0, 1).toUpperCase()}
             </div>
           </div>
         </header>
