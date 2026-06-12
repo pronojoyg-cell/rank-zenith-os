@@ -41,6 +41,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import kalamBg from "@/assets/kalam-bg.jpg";
 import { DevAnalyticsView } from "@/components/DevAnalyticsView";
+import { useDataMode } from "@/hooks/useDataMode";
+import { demoFocus, demoMistakes, demoMocks, demoPractice, demoRevisions } from "@/lib/demo-data";
 
 const DEVELOPER_EMAIL = "pronojoyg@gmail.com";
 
@@ -195,6 +197,7 @@ function ChartSkeleton() {
 
 function Dashboard() {
   const { user } = useAuth();
+  const { isDemo } = useDataMode();
   const now = Date.now();
   const since7 = new Date(now - 7 * 86400000).toISOString();
   const since14 = new Date(now - 14 * 86400000).toISOString();
@@ -233,7 +236,9 @@ function Dashboard() {
     },
   });
 
-  const d = q.data;
+  const d = isDemo
+    ? { practice: demoPractice, mistakes: demoMistakes, revisions: demoRevisions, focus: demoFocus, mocks: demoMocks }
+    : q.data;
 
   // ---------- HERO METRICS ----------
   const hero = useMemo(() => {
@@ -430,7 +435,7 @@ function Dashboard() {
       .map((k) => ({ name: k === "mastered" ? "Mastered" : k, key: k, value: map[k] }));
   }, [d]);
 
-  const loading = q.isLoading;
+  const loading = !isDemo && q.isLoading;
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -452,7 +457,7 @@ function Dashboard() {
       <header>
         <div className="flex items-center gap-2 text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
           <span className="size-1.5 rounded-full bg-primary animate-pulse" />
-          Command Dashboard · Live
+           Command Dashboard · {isDemo ? "Demo" : "Live"}
         </div>
         <h1 className="mt-2 text-3xl lg:text-4xl font-semibold tracking-tight">
           Performance <span className="text-gradient-cyan">Intelligence</span>
@@ -466,7 +471,7 @@ function Dashboard() {
         </blockquote>
       </header>
 
-      {user?.email === DEVELOPER_EMAIL && (
+      {!isDemo && user?.email === DEVELOPER_EMAIL && (
         <section className="animate-chart-enter">
           <DevAnalyticsView />
         </section>
