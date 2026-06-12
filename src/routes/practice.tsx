@@ -7,6 +7,8 @@ import { Panel, Stat, Tag } from "@/components/ui-bits";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useDataMode } from "@/hooks/useDataMode";
+import { demoPractice } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/practice")({ component: Practice });
 
@@ -15,6 +17,7 @@ const DIFFS = ["easy", "medium", "hard", "advanced"] as const;
 
 function Practice() {
   const { user } = useAuth();
+  const { isDemo } = useDataMode();
   const qc = useQueryClient();
   const since7 = new Date(Date.now() - 7 * 86400000).toISOString();
 
@@ -65,7 +68,7 @@ function Practice() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["practice"] }),
   });
 
-  const list = sessions.data ?? [];
+  const list = isDemo ? demoPractice : (sessions.data ?? []);
   const att = list.reduce((a, r: any) => a + r.attempted, 0);
   const cor = list.reduce((a, r: any) => a + r.correct, 0);
   const mins = list.reduce((a, r: any) => a + r.duration_min, 0);
@@ -90,7 +93,7 @@ function Practice() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        <Panel title="Log a session" subtitle="Be honest. The data is the mentor." accent="cyan">
+        <Panel title="Log a session" subtitle={isDemo ? "Demo mode is read-only." : "Be honest. The data is the mentor."} accent="cyan">
           <form onSubmit={(e) => { e.preventDefault(); log.mutate(); }} className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <select value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className="px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm">
@@ -116,7 +119,7 @@ function Practice() {
               </label>
             </div>
             <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Notes (optional)" rows={2} className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm" />
-            <button className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-1">
+            <button disabled={isDemo} className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50">
               <Plus className="size-4" /> Log session
             </button>
           </form>
@@ -158,9 +161,9 @@ function Practice() {
                   <span className="text-[11px] text-muted-foreground tabular-nums">
                     {new Date(s.created_at).toLocaleDateString()}
                   </span>
-                  <button onClick={() => del.mutate(s.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger">
+                   {!isDemo && <button onClick={() => del.mutate(s.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger">
                     <Trash2 className="size-4" />
-                  </button>
+                   </button>}
                 </li>
               );
             })}
