@@ -560,28 +560,29 @@ function ChatLandingPage({ onSignIn }: { onSignIn: () => void }) {
             <div className="relative flex justify-center text-[10.5px] uppercase tracking-wider"><span className="bg-surface px-3 text-muted-foreground">or</span></div>
           </div>
 
-          {/* Anonymous */}
-          <button onClick={async () => { setBusy(true); const { data, error } = await supabase.auth.signInAnonymously(); if (error) { toast.error(error.message); } else if (data.user) { toast.success("Welcome!"); onSignIn(); } setBusy(false); }} disabled={busy} className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-dashed border-border hover:border-primary/40 hover:bg-primary/5 transition text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-50">
+          {/* Guest access uses a real anonymous session so chat permissions still apply. */}
+          <button onClick={async () => {
+            setBusy(true);
+            try {
+              const { data, error } = await supabase.auth.signInAnonymously();
+              if (error) throw error;
+              if (!data.user || !data.session) throw new Error("Guest session could not be created.");
+              toast.success("Guest access enabled");
+              onSignIn();
+            } catch (error) {
+              toast.error(error instanceof Error ? error.message : "Could not continue as guest");
+            } finally {
+              setBusy(false);
+            }
+          }} disabled={busy} className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-dashed border-border hover:border-primary/40 hover:bg-primary/5 transition text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-50">
             <User className="size-4" />
-            Continue Anonymously
+            {busy ? "Opening guest chat…" : "Continue as Guest"}
           </button>
         </div>
 
-        {/* Footer stats */}
-        <div className="mt-8 grid grid-cols-3 gap-3 text-center">
-          <div className="p-3 rounded-xl bg-surface/40 border border-border/30">
-            <div className="text-lg font-bold text-primary">12.5K</div>
-            <div className="text-[10.5px] text-muted-foreground">Active Aspirants</div>
-          </div>
-          <div className="p-3 rounded-xl bg-surface/40 border border-border/30">
-            <div className="text-lg font-bold text-chart-4">2.4K</div>
-            <div className="text-[10.5px] text-muted-foreground">Study Groups</div>
-          </div>
-          <div className="p-3 rounded-xl bg-surface/40 border border-border/30">
-            <div className="text-lg font-bold text-chart-3">48K</div>
-            <div className="text-[10.5px] text-muted-foreground">Messages/Day</div>
-          </div>
-        </div>
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          Guest accounts can chat immediately. Create a permanent account later to keep access across devices.
+        </p>
       </div>
     </div>
   );
