@@ -19,6 +19,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { FeedbackButton } from "@/components/FeedbackButton";
+import { useDataMode } from "@/hooks/useDataMode";
+import { Button } from "@/components/ui/button";
 
 const nav = [
   { to: "/chat", label: "Chat with Peers", icon: MessageCircle },
@@ -118,10 +120,28 @@ function SidebarContent({
   );
 }
 
-function DesktopTopBar() {
+function DataModeSwitch() {
+  const { mode, setMode } = useDataMode();
   return (
-    <div className="hidden lg:flex sticky top-0 z-30 items-center justify-end gap-2 px-6 h-12 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+    <div className="inline-flex rounded-xl border border-border bg-surface p-1 shadow-sm" aria-label="Choose app data mode">
+      <Button size="sm" variant={mode === "real" ? "default" : "ghost"} onClick={() => setMode("real")} className="h-7 px-3 text-xs">
+        Real
+      </Button>
+      <Button size="sm" variant={mode === "demo" ? "default" : "ghost"} onClick={() => setMode("demo")} className="h-7 px-3 text-xs">
+        Demo
+      </Button>
+    </div>
+  );
+}
+
+function DesktopTopBar({ showModeSwitch }: { showModeSwitch: boolean }) {
+  return (
+    <div className="hidden lg:grid sticky top-0 z-30 grid-cols-3 items-center px-6 h-12 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+      <div />
+      <div className="flex justify-center">{showModeSwitch && <DataModeSwitch />}</div>
+      <div className="flex justify-end">
       <FeedbackButton />
+      </div>
     </div>
   );
 }
@@ -152,6 +172,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
 
   const activeItem = nav.find((n) => n.to === pathname);
+  const showModeSwitch = pathname !== "/mentor";
 
   return (
     <div className="min-h-screen flex">
@@ -205,6 +226,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
 
           <div className="ml-auto flex items-center gap-2">
+            {showModeSwitch && <DataModeSwitch />}
             <FeedbackButton compact />
             <div className="text-right leading-tight hidden sm:block">
               <div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Target</div>
@@ -216,7 +238,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <DesktopTopBar />
+        <DesktopTopBar showModeSwitch={showModeSwitch} />
 
         <div className="flex-1 min-w-0 pb-[env(safe-area-inset-bottom)]">{children}</div>
       </main>
