@@ -6,6 +6,8 @@ import { Panel, Stat, Tag } from "@/components/ui-bits";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useDataMode } from "@/hooks/useDataMode";
+import { demoRevisions } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/revision")({ component: Revision });
 
@@ -13,6 +15,7 @@ const SUBJECTS = ["Physics", "Chemistry", "Maths"] as const;
 
 function Revision() {
   const { user } = useAuth();
+  const { isDemo } = useDataMode();
   const qc = useQueryClient();
 
   const q = useQuery({
@@ -51,7 +54,7 @@ function Revision() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["revisions"] }),
   });
 
-  const list = q.data ?? [];
+  const list = isDemo ? demoRevisions : (q.data ?? []);
   const now = Date.now();
   const due = list.filter((r: any) => new Date(r.next_review_at).getTime() <= now);
   const mastered = list.filter((r: any) => r.stage === "mastered").length;
@@ -77,7 +80,7 @@ function Revision() {
             {SUBJECTS.map((s) => <option key={s}>{s}</option>)}
           </select>
           <input value={f.topic} onChange={(e) => setF({ ...f, topic: e.target.value })} placeholder="Topic e.g. Rotational Dynamics" className="flex-1 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm" />
-          <button className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1"><Plus className="size-4" /> Add</button>
+          <button disabled={isDemo} className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1 disabled:opacity-50"><Plus className="size-4" /> Add</button>
         </form>
       </Panel>
 
@@ -99,11 +102,11 @@ function Revision() {
                     </div>
                   </div>
                   {r.stage !== "mastered" && (
-                    <button onClick={() => advance.mutate({ id: r.id, confidence: Math.min(100, r.confidence + 10) })} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-primary text-primary-foreground flex items-center gap-1">
+                    <button disabled={isDemo} onClick={() => advance.mutate({ id: r.id, confidence: Math.min(100, r.confidence + 10) })} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-primary text-primary-foreground flex items-center gap-1 disabled:opacity-50">
                       <RotateCcw className="size-3" /> Mark revised
                     </button>
                   )}
-                  <button onClick={() => del.mutate(r.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger"><Trash2 className="size-4" /></button>
+                  {!isDemo && <button onClick={() => del.mutate(r.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger"><Trash2 className="size-4" /></button>}
                 </li>
               );
             })}

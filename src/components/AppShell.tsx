@@ -19,6 +19,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { FeedbackButton } from "@/components/FeedbackButton";
+import { useDataMode } from "@/hooks/useDataMode";
+import { Button } from "@/components/ui/button";
 
 const nav = [
   { to: "/chat", label: "Chat with Peers", icon: MessageCircle },
@@ -118,10 +120,28 @@ function SidebarContent({
   );
 }
 
-function DesktopTopBar() {
+function DataModeSwitch() {
+  const { mode, setMode } = useDataMode();
   return (
-    <div className="hidden lg:flex sticky top-0 z-30 items-center justify-end gap-2 px-6 h-12 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+    <div className="inline-flex rounded-xl border border-border bg-surface p-1 shadow-sm" aria-label="Choose app data mode">
+      <Button size="sm" variant={mode === "real" ? "default" : "ghost"} onClick={() => setMode("real")} className="h-7 px-3 text-xs">
+        Real
+      </Button>
+      <Button size="sm" variant={mode === "demo" ? "default" : "ghost"} onClick={() => setMode("demo")} className="h-7 px-3 text-xs">
+        Demo
+      </Button>
+    </div>
+  );
+}
+
+function DesktopTopBar({ showModeSwitch }: { showModeSwitch: boolean }) {
+  return (
+    <div className="hidden lg:grid sticky top-0 z-30 grid-cols-3 items-center px-6 h-12 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+      <div />
+      <div className="flex justify-center">{showModeSwitch && <DataModeSwitch />}</div>
+      <div className="flex justify-end">
       <FeedbackButton />
+      </div>
     </div>
   );
 }
@@ -129,6 +149,7 @@ function DesktopTopBar() {
 export function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { user, signOut } = useAuth();
+  const { isDemo } = useDataMode();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -141,7 +162,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     },
   });
 
-  const examDate = profile?.exam_date ? new Date(profile.exam_date) : null;
+  const displayProfile = isDemo
+    ? { display_name: "Demo Aspirant", target_air: 100, exam_date: new Date(Date.now() + 180 * 86400000).toISOString() }
+    : profile;
+  const examDate = displayProfile?.exam_date ? new Date(displayProfile.exam_date) : null;
   const daysToExam = examDate
     ? Math.max(0, Math.ceil((examDate.getTime() - Date.now()) / 86400000))
     : null;
@@ -152,6 +176,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
 
   const activeItem = nav.find((n) => n.to === pathname);
+  const showModeSwitch = pathname !== "/mentor";
 
   return (
     <div className="min-h-screen flex">
@@ -159,7 +184,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border/60 bg-surface/40 backdrop-blur-xl sticky top-0 h-screen">
         <SidebarContent
           pathname={pathname}
-          profile={profile}
+          profile={displayProfile}
           user={user}
           daysToExam={daysToExam}
           onSignOut={handleSignOut}
@@ -181,7 +206,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <SheetContent side="left" className="p-0 w-[85vw] max-w-[320px] flex flex-col bg-surface/95 backdrop-blur-xl border-border/60">
               <SidebarContent
                 pathname={pathname}
-                profile={profile}
+                profile={displayProfile}
                 user={user}
                 daysToExam={daysToExam}
                 onSignOut={handleSignOut}
@@ -205,18 +230,19 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
 
           <div className="ml-auto flex items-center gap-2">
+            {showModeSwitch && <DataModeSwitch />}
             <FeedbackButton compact />
             <div className="text-right leading-tight hidden sm:block">
               <div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Target</div>
-              <div className="text-xs font-semibold text-gradient-gold">&lt; {profile?.target_air ?? 100}</div>
+               <div className="text-xs font-semibold text-gradient-gold">&lt; {displayProfile?.target_air ?? 100}</div>
             </div>
             <div className="size-8 rounded-full bg-gradient-to-br from-primary to-chart-4 grid place-items-center text-xs font-semibold text-primary-foreground">
-              {(profile?.display_name ?? user?.email ?? "?").slice(0, 1).toUpperCase()}
+              {(displayProfile?.display_name ?? user?.email ?? "?").slice(0, 1).toUpperCase()}
             </div>
           </div>
         </header>
 
-        <DesktopTopBar />
+        <DesktopTopBar showModeSwitch={showModeSwitch} />
 
         <div className="flex-1 min-w-0 pb-[env(safe-area-inset-bottom)]">{children}</div>
       </main>

@@ -6,6 +6,8 @@ import { Panel, Stat } from "@/components/ui-bits";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useDataMode } from "@/hooks/useDataMode";
+import { demoFocus } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/focus")({ component: Focus });
 
@@ -13,6 +15,7 @@ const SUBJECTS = ["Physics", "Chemistry", "Maths"] as const;
 
 function Focus() {
   const { user } = useAuth();
+  const { isDemo } = useDataMode();
   const qc = useQueryClient();
   const [running, setRunning] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -63,6 +66,7 @@ function Focus() {
   });
 
   const start = () => {
+    if (isDemo) { toast.info("Switch to Real mode to start a focus session"); return; }
     if (!startedAtRef.current) startedAtRef.current = new Date().toISOString();
     setRunning(true);
   };
@@ -76,7 +80,7 @@ function Focus() {
     setSeconds(0); setDistractions(0); setLabel(""); startedAtRef.current = null;
   };
 
-  const list = sessions.data ?? [];
+  const list = isDemo ? demoFocus : (sessions.data ?? []);
   const totalSec = list.reduce((a, s: any) => a + s.duration_sec, 0);
   const distTotal = list.reduce((a, s: any) => a + s.distractions, 0);
 
@@ -110,7 +114,7 @@ function Focus() {
           </div>
           <div className="flex flex-col gap-2">
             {!running ? (
-              <button onClick={start} className="px-5 py-3 rounded-xl bg-primary text-primary-foreground font-medium flex items-center gap-2"><Play className="size-4" /> Start</button>
+              <button onClick={start} disabled={isDemo} className="px-5 py-3 rounded-xl bg-primary text-primary-foreground font-medium flex items-center gap-2 disabled:opacity-50"><Play className="size-4" /> Start</button>
             ) : (
               <button onClick={() => setRunning(false)} className="px-5 py-3 rounded-xl bg-surface-2 border border-border font-medium flex items-center gap-2"><Pause className="size-4" /> Pause</button>
             )}

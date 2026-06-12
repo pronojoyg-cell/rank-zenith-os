@@ -6,6 +6,8 @@ import { Panel, Stat, Tag } from "@/components/ui-bits";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useDataMode } from "@/hooks/useDataMode";
+import { demoMistakes } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/mistakes")({ component: Mistakes });
 
@@ -14,6 +16,7 @@ const SUBJECTS = ["Physics", "Chemistry", "Maths"] as const;
 
 function Mistakes() {
   const { user } = useAuth();
+  const { isDemo } = useDataMode();
   const qc = useQueryClient();
 
   const q = useQuery({
@@ -51,7 +54,7 @@ function Mistakes() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["mistakes"] }),
   });
 
-  const list = q.data ?? [];
+  const list = isDemo ? demoMistakes : (q.data ?? []);
   const open = list.filter((m: any) => !m.resolved);
   const cost = open.reduce((a, m: any) => a + m.mark_cost, 0);
   const byType = TYPES.map((t) => ({ t, n: list.filter((m: any) => m.type === t).length }));
@@ -89,7 +92,7 @@ function Mistakes() {
               <input type="number" min={1} value={f.mark_cost} onChange={(e) => setF({ ...f, mark_cost: +e.target.value })} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-surface-2 border border-border text-sm tabular-nums" />
             </label>
             <textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} placeholder="Fix / lesson" rows={2} className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm" />
-            <button className="w-full py-2 rounded-lg bg-danger text-destructive-foreground text-sm font-medium flex items-center justify-center gap-1"><Plus className="size-4" /> Log mistake</button>
+            <button disabled={isDemo} className="w-full py-2 rounded-lg bg-danger text-destructive-foreground text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"><Plus className="size-4" /> Log mistake</button>
           </form>
         </Panel>
 
@@ -112,7 +115,7 @@ function Mistakes() {
           <ul className="space-y-2">
             {list.map((m: any) => (
               <li key={m.id} className={`group flex items-center gap-3 p-3 rounded-xl bg-surface-2/40 border border-border ${m.resolved ? "opacity-60" : ""}`}>
-                <button onClick={() => toggle.mutate(m)} className="size-7 rounded-md border border-border grid place-items-center hover:border-success">
+                <button disabled={isDemo} onClick={() => toggle.mutate(m)} className="size-7 rounded-md border border-border grid place-items-center hover:border-success disabled:opacity-60">
                   {m.resolved && <Check className="size-4 text-success" />}
                 </button>
                 <Tag tone={m.subject === "Physics" ? "cyan" : m.subject === "Chemistry" ? "gold" : "green"}>{m.subject}</Tag>
@@ -122,7 +125,7 @@ function Mistakes() {
                   {m.notes && <div className="text-[11px] text-muted-foreground truncate">{m.notes}</div>}
                 </div>
                 <span className="text-xs tabular-nums text-danger">−{m.mark_cost}</span>
-                <button onClick={() => del.mutate(m.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger"><Trash2 className="size-4" /></button>
+                {!isDemo && <button onClick={() => del.mutate(m.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger"><Trash2 className="size-4" /></button>}
               </li>
             ))}
           </ul>

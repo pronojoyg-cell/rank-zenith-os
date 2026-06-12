@@ -7,11 +7,14 @@ import { Panel, Stat } from "@/components/ui-bits";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useDataMode } from "@/hooks/useDataMode";
+import { demoMocks } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/mocks")({ component: Mocks });
 
 function Mocks() {
   const { user } = useAuth();
+  const { isDemo } = useDataMode();
   const qc = useQueryClient();
 
   const q = useQuery({
@@ -46,7 +49,7 @@ function Mocks() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["mocks"] }),
   });
 
-  const list = q.data ?? [];
+  const list = isDemo ? demoMocks : (q.data ?? []);
   const trend = list.map((m: any) => ({ d: new Date(m.taken_on).toLocaleDateString(undefined, { month: "short", day: "numeric" }), marks: m.marks, rank: m.rank_projection || null }));
   const last = list[list.length - 1] as any;
   const best = list.reduce((a: any, m: any) => (a && a.marks > m.marks ? a : m), null as any);
@@ -96,7 +99,7 @@ function Mocks() {
                 </label>
               ))}
             </div>
-            <button className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-1"><Plus className="size-4" /> Add mock</button>
+            <button disabled={isDemo} className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"><Plus className="size-4" /> Add mock</button>
           </form>
         </Panel>
 
@@ -133,7 +136,7 @@ function Mocks() {
                 </div>
                 <div className="text-sm font-semibold tabular-nums">{m.marks}/{m.max_marks}</div>
                 {m.rank_projection ? <div className="text-xs text-gold tabular-nums">AIR ~{m.rank_projection}</div> : null}
-                <button onClick={() => del.mutate(m.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger"><Trash2 className="size-4" /></button>
+                {!isDemo && <button onClick={() => del.mutate(m.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger"><Trash2 className="size-4" /></button>}
               </li>
             ))}
           </ul>

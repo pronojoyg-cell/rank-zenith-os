@@ -6,11 +6,14 @@ import { Panel, Stat, Bar, Tag } from "@/components/ui-bits";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useDataMode } from "@/hooks/useDataMode";
+import { demoFocus, demoMistakes, demoPractice, demoRevisions, demoTasks } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/")({ component: MissionControl });
 
 function MissionControl() {
   const { user } = useAuth();
+  const { isDemo } = useDataMode();
   const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
   const since7 = new Date(Date.now() - 7 * 86400000).toISOString();
@@ -90,11 +93,20 @@ function MissionControl() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
 
-  const taskList = tasks.data ?? [];
+  const taskList = isDemo ? demoTasks : (tasks.data ?? []);
+  const displayStats = isDemo
+    ? {
+        accuracy: Math.round((demoPractice.reduce((sum, row) => sum + row.correct, 0) / demoPractice.reduce((sum, row) => sum + row.attempted, 0)) * 100),
+        attempted: demoPractice.reduce((sum, row) => sum + row.attempted, 0),
+        focusHours: demoFocus.reduce((sum, row) => sum + row.duration_sec, 0) / 3600,
+        mistakeCount: demoMistakes.filter((row) => !row.resolved).length,
+        dueRevisions: demoRevisions.filter((row) => new Date(row.next_review_at).getTime() <= Date.now()),
+      }
+    : stats.data;
   const completed = taskList.filter((t: any) => t.done >= t.target).length;
   const pct = taskList.length ? Math.round((completed / taskList.length) * 100) : 0;
-  const readiness = stats.data
-    ? Math.min(100, Math.round((stats.data.accuracy * 0.5 + Math.min(stats.data.focusHours / 35, 1) * 50)))
+  const readiness = displayStats
+    ? Math.min(100, Math.round((displayStats.accuracy * 0.5 + Math.min(displayStats.focusHours / 35, 1) * 50)))
     : 0;
 
   return (
@@ -127,16 +139,16 @@ function MissionControl() {
           <Bar value={pct} className="mt-3" />
         </Panel>
         <Panel className="!p-4">
-          <Stat label="Focus 7d" value={`${(stats.data?.focusHours ?? 0).toFixed(1)}h`} />
-          <Bar value={Math.min(100, ((stats.data?.focusHours ?? 0) / 35) * 100)} tone="green" className="mt-3" />
+          <Stat label="Focus 7d" value={`${(displayStats?.focusHours ?? 0).toFixed(1)}h`} />
+          <Bar value={Math.min(100, ((displayStats?.focusHours ?? 0) / 35) * 100)} tone="green" className="mt-3" />
         </Panel>
         <Panel className="!p-4">
-          <Stat label="Accuracy 7d" value={`${stats.data?.accuracy ?? 0}%`} delta={`${stats.data?.attempted ?? 0} attempted`} />
-          <Bar value={stats.data?.accuracy ?? 0} tone="cyan" className="mt-3" />
+          <Stat label="Accuracy 7d" value={`${displayStats?.accuracy ?? 0}%`} delta={`${displayStats?.attempted ?? 0} attempted`} />
+          <Bar value={displayStats?.accuracy ?? 0} tone="cyan" className="mt-3" />
         </Panel>
         <Panel className="!p-4">
-          <Stat label="Open mistakes" value={stats.data?.mistakeCount ?? 0} delta="Pending reattempt" tone="warn" />
-          <Bar value={Math.min(100, (stats.data?.mistakeCount ?? 0) * 5)} tone="red" className="mt-3" />
+          <Stat label="Open mistakes" value={displayStats?.mistakeCount ?? 0} delta="Pending reattempt" tone="warn" />
+          <Bar value={Math.min(100, (displayStats?.mistakeCount ?? 0) * 5)} tone="red" className="mt-3" />
         </Panel>
       </div>
 
@@ -164,7 +176,7 @@ function MissionControl() {
               onChange={(e) => setNewTarget(parseInt(e.target.value) || 1)}
               className="w-16 px-2 py-2 rounded-lg bg-surface-2 border border-border outline-none text-sm tabular-nums"
             />
-            <button className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1">
+             <button disabled={isDemo} className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1 disabled:opacity-50">
               <Plus className="size-4" /> Add
             </button>
           </form>
@@ -181,7 +193,7 @@ function MissionControl() {
                     key={t.id}
                     className="group flex items-center gap-3 p-3 rounded-xl bg-surface-2/40 border border-border hover:border-border-strong"
                   >
-                    <button onClick={() => toggleTask.mutate(t)} className="shrink-0">
+                     <button disabled={isDemo} onClick={() => toggleTask.mutate(t)} className="shrink-0 disabled:opacity-60">
                       {done ? (
                         <CheckCircle2 className="size-5 text-success" />
                       ) : (
@@ -196,12 +208,12 @@ function MissionControl() {
                         {t.done}/{t.target}
                       </div>
                     </div>
-                    <button
+                     {!isDemo && <button
                       onClick={() => delTask.mutate(t.id)}
                       className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger"
                     >
                       <Trash2 className="size-4" />
-                    </button>
+                     </button>}
                   </li>
                 );
               })}
@@ -228,7 +240,7 @@ function MissionControl() {
       <div className="grid lg:grid-cols-2 gap-6">
         <Panel
           title="Due for revision"
-          subtitle={`${stats.data?.dueRevisions.length ?? 0} cards waiting`}
+           subtitle={`${displayStats?.dueRevisions.length ?? 0} cards waiting`}
           accent="gold"
           action={
             <Link to="/revision" className="text-xs text-primary hover:underline flex items-center gap-1">
@@ -236,11 +248,11 @@ function MissionControl() {
             </Link>
           }
         >
-          {(stats.data?.dueRevisions ?? []).length === 0 ? (
+           {(displayStats?.dueRevisions ?? []).length === 0 ? (
             <div className="py-6 text-center text-sm text-muted-foreground">Nothing due. Add topics in the Revision Vault.</div>
           ) : (
             <ul className="space-y-2">
-              {stats.data!.dueRevisions.map((r: any) => (
+               {displayStats?.dueRevisions.map((r: any) => (
                 <li key={r.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-surface-2/40 border border-border">
                   <Tag tone="gold">{r.stage}</Tag>
                   <div className="flex-1 min-w-0">

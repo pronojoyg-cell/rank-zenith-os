@@ -12,6 +12,7 @@ import {
 import appCss from "../styles.css?url";
 import { AppShell } from "@/components/AppShell";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { DataModeProvider } from "@/hooks/useDataMode";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -130,9 +131,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Gate>
-          <Outlet />
-        </Gate>
+        <DataModeProvider>
+          <Gate>
+            <Outlet />
+          </Gate>
+        </DataModeProvider>
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>

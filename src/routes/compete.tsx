@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,20 +8,13 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useDataMode } from "@/hooks/useDataMode";
+import { demoLeaderboard } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/compete")({
   component: ComputePage,
   head: () => ({ meta: [{ title: "Compete — JEE OS" }] }),
 });
-
-const MOCK_FALLBACK = [
-  { id: "m1", display_name: "Aarav S.", target_air: 12, current_streak: 47, total_points: 4820 },
-  { id: "m2", display_name: "Ishita R.", target_air: 25, current_streak: 41, total_points: 4310 },
-  { id: "m3", display_name: "Kabir M.", target_air: 38, current_streak: 36, total_points: 3995 },
-  { id: "m4", display_name: "Diya P.", target_air: 55, current_streak: 28, total_points: 3520 },
-  { id: "m5", display_name: "Rohan K.", target_air: 80, current_streak: 22, total_points: 3110 },
-  { id: "m6", display_name: "Sneha V.", target_air: 95, current_streak: 19, total_points: 2780 },
-];
 
 function Avatar({ name, size = 56, ring }: { name: string; size?: number; ring?: string }) {
   const letter = (name ?? "?").slice(0, 1).toUpperCase();
@@ -76,7 +68,7 @@ function PodiumCard({ rank, row, color, glow, height }: any) {
 function ComputePage() {
   const { user } = useAuth();
   const { profile, trackActivity, setIncognito } = useGamification();
-  const [dataMode, setDataMode] = useState<"real" | "demo">("real");
+  const { isDemo } = useDataMode();
 
   const lb = useQuery({
     queryKey: ["leaderboard"],
@@ -100,7 +92,7 @@ function ComputePage() {
       current_streak: r.current_streak ?? 0,
       total_points: r.total_points ?? 0,
     }));
-  const rows = dataMode === "demo" ? MOCK_FALLBACK : realRows;
+  const rows = isDemo ? demoLeaderboard : realRows;
 
   const top3 = rows.slice(0, 3);
   const rest = rows.slice(3);
@@ -121,14 +113,6 @@ function ComputePage() {
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-3">
-          <div className="inline-flex rounded-xl border border-border bg-surface p-1" aria-label="Choose leaderboard data">
-            <Button size="sm" variant={dataMode === "real" ? "default" : "ghost"} onClick={() => setDataMode("real")}>
-              Real data
-            </Button>
-            <Button size="sm" variant={dataMode === "demo" ? "default" : "ghost"} onClick={() => setDataMode("demo")}>
-              Demo data
-            </Button>
-          </div>
           <div className="glass-panel rounded-xl p-3 flex items-center gap-3">
             <Shield className="size-4 text-primary" />
             <div className="text-xs">
@@ -137,7 +121,7 @@ function ComputePage() {
             </div>
             <Switch
               checked={!!profile?.is_incognito}
-              disabled={dataMode === "demo"}
+              disabled={isDemo}
               onCheckedChange={(v) =>
                 setIncognito.mutate(v, {
                   onSuccess: () => toast.success(v ? "You're now hidden" : "You're visible again"),
@@ -149,7 +133,7 @@ function ComputePage() {
       </header>
 
       <div className="rounded-xl border border-border/60 bg-surface/40 px-4 py-3 text-sm text-muted-foreground">
-        {dataMode === "demo"
+        {isDemo
           ? "Demo mode shows sample leaderboard entries only. Nothing you do here changes your account."
           : "Real mode shows live leaderboard data from actual users."}
       </div>
@@ -218,7 +202,7 @@ function ComputePage() {
         </div>
       </section>
 
-      {dataMode === "real" && <div className="flex flex-wrap gap-2">
+      {!isDemo && <div className="flex flex-wrap gap-2">
         <Button onClick={() => trackActivity.mutate("mission")} disabled={trackActivity.isPending}>
           +10 Mission
         </Button>
