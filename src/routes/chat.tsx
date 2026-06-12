@@ -84,6 +84,14 @@ import {
   FileText,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useDataMode } from "@/hooks/useDataMode";
+import {
+  demoChatMessages,
+  demoChatPeers,
+  demoClips,
+  demoCommunities,
+  demoGroups,
+} from "@/lib/demo-data";
 
 export const Route = createFileRoute("/chat")({
   component: ChatPage,
@@ -590,6 +598,7 @@ function ChatLandingPage({ onSignIn }: { onSignIn: () => void }) {
 
 function ChatPage() {
   const { user, loading } = useAuth();
+  const { isDemo } = useDataMode();
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>("chats");
   const [search, setSearch] = useState("");
@@ -611,10 +620,11 @@ function ChatPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [signedIn, setSignedIn] = useState(false);
+  const [demoMessages, setDemoMessages] = useState<Msg[]>(demoChatMessages);
 
   useEffect(() => {
-    if (user) setSignedIn(true);
-  }, [user]);
+    if (user || isDemo) setSignedIn(true);
+  }, [user, isDemo]);
 
   const conns = useQuery({
     queryKey: ["connections", user?.id],
@@ -671,6 +681,12 @@ function ChatPage() {
   };
 
   const openChat = async (peerId: string, name: string, streak: number) => {
+    if (isDemo) {
+      setActivePeer({ id: peerId, name, streak });
+      setActiveRoom("demo-room");
+      setClearedAt(0);
+      return;
+    }
     const { data, error } = await supabase.rpc("get_or_create_dm", { _peer: peerId });
     if (error) { toast.error(error.message); return; }
     setActivePeer({ id: peerId, name, streak });
@@ -702,6 +718,23 @@ function ChatPage() {
     const text = draft.trim();
     if (!text || !activeRoom) return;
     setDraft("");
+    if (isDemo) {
+      setDemoMessages((messages) => [
+        ...messages,
+        {
+          id: `demo-local-${Date.now()}`,
+          room_id: "demo-room",
+          sender_id: "demo-user",
+          message_text: text,
+          created_at: new Date().toISOString(),
+          deleted_for_everyone: false,
+          deleted_by_users: [],
+          media_url: null,
+          message_type: "text",
+        },
+      ]);
+      return;
+    }
     const { error } = await supabase.from("messages").insert({ room_id: activeRoom, sender_id: user!.id, message_text: text } as any);
     if (error) toast.error(error.message);
   };
@@ -739,10 +772,12 @@ function ChatPage() {
     if (error) toast.error(error.message);
   };
 
-  const incoming = (conns.data ?? []).filter((c) => c.status === "pending" && c.receiver_id === user?.id);
-  const accepted = (conns.data ?? []).filter((c) => c.status === "accepted");
+  const incoming = isDemo ? [] : (conns.data ?? []).filter((c) => c.status === "pending" && c.receiver_id === user?.id);
+  const accepted = isDemo
+    ? demoChatPeers.map((peer) => ({ id: peer.id, sender_id: "demo-user", receiver_id: peer.id, status: "accepted" }))
+    : (conns.data ?? []).filter((c) => c.status === "accepted");
 
-  const visibleMsgs = (msgs.data ?? []).filter((m) => !(m.deleted_by_users ?? []).includes(user?.id ?? "") && new Date(m.created_at).getTime() > clearedAt);
+  const visibleMsgs = (isDemo ? demoMessages : (msgs.data ?? [])).filter((m) => !(m.deleted_by_users ?? []).includes(user?.id ?? "") && new Date(m.created_at).getTime() > clearedAt);
 
   const showChatPane = activePeer && tab === "chats";
   const showGroupPane = activeGroup && tab === "groups";
@@ -753,7 +788,7 @@ function ChatPage() {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
-  if (!signedIn || !user) {
+  if ((!signedIn || !user) && !isDemo) {
     return <ChatLandingPage onSignIn={() => setSignedIn(true)} />;
   }
 
@@ -847,8 +882,9 @@ function ChatPage() {
                   </div>
                 ) : (
                   accepted.map((c) => {
-                    const peerId = c.sender_id === user?.id ? c.receiver_id : c.sender_id;
-                    const p = peerMap.get(peerId);
+                    const peerId = isDemo ? c.receiver_id : c.sender_id === user?.id ? c.receiver_id : c.sender_id;
+                    const demoPeer = isDemo ? demoChatPeers.find((peer) => peer.id === peerId) : undefined;
+                    const p = demoPeer ? { display_name: demoPeer.name, current_streak: demoPeer.streak } : peerMap.get(peerId);
                     const active = activePeer?.id === peerId;
                     return (
                       <button key={c.id} onClick={() => openChat(peerId, p?.display_name ?? "Aspirant", p?.current_streak ?? 0)} className={`w-full flex items-center gap-3 px-4 py-3 transition border-b border-border/20 ${active ? "bg-surface-2/70" : "hover:bg-surface-2/40"}`}>
@@ -896,7 +932,7 @@ function ChatPage() {
                       </div>
                     ) : (
                       visibleMsgs.map((m, i) => {
-                        const mine = m.sender_id === user?.id;
+                        const mine = isDemo ? m.sender_id === "demo-user" : m.sender_id === user?.id;
                         const gone = m.deleted_for_everyone;
                         const prevMine = i > 0 && visibleMsgs[i - 1].sender_id === m.sender_id;
                         return (
@@ -958,7 +994,7 @@ function ChatPage() {
                 <div className="relative"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" /><Input placeholder="Search groups…" className="pl-9 bg-surface-2/50 border-border/40 rounded-xl h-9 text-sm" /></div>
               </div>
               <div className="flex-1 overflow-y-auto">
-                {DEFAULT_CLIP_GROUPS.map((g) => (
+                {(isDemo ? demoGroups : DEFAULT_CLIP_GROUPS).map((g) => (
                   <button key={g.id} onClick={() => setActiveGroup(g)} className={`w-full flex items-center gap-3 px-4 py-3 transition border-b border-border/20 ${activeGroup?.id === g.id ? "bg-surface-2/70" : "hover:bg-surface-2/40"}`}>
                     <div className={`size-12 rounded-2xl bg-gradient-to-br ${g.color} grid place-items-center font-bold text-lg text-white shrink-0`}>{g.avatar}</div>
                     <div className="flex-1 min-w-0 text-left">
@@ -1025,7 +1061,7 @@ function ChatPage() {
               <button onClick={() => setShowCreateClip(true)} className="size-9 rounded-xl grid place-items-center text-muted-foreground hover:text-foreground hover:bg-surface-2 transition"><Camera className="size-4.5" /></button>
             </div>
             <div className="max-w-xl mx-auto px-0 sm:px-4 py-2 space-y-0 sm:space-y-3">
-              {DEMO_CLIPS.map((clip) => (
+              {(isDemo ? demoClips : DEMO_CLIPS).map((clip) => (
                 <article key={clip.id} className="bg-surface/30 sm:rounded-2xl border-y sm:border border-border/40 overflow-hidden">
                   <div className="flex items-center gap-3 px-4 pt-4 pb-2">
                     <div className={`size-10 rounded-full bg-gradient-to-br ${clip.color} grid place-items-center font-bold text-white shrink-0`}>{clip.avatar}</div>
@@ -1071,7 +1107,7 @@ function ChatPage() {
               </div>
               <div className="flex-1 overflow-y-auto">
                 <div className="px-3 py-2 text-[10.5px] uppercase tracking-wider text-muted-foreground">Your Communities</div>
-                {DEMO_COMMUNITIES.filter((c) => joinedCommunities.has(c.id)).map((c) => (
+                {(isDemo ? demoCommunities : DEMO_COMMUNITIES).filter((c) => isDemo ? c.joined || joinedCommunities.has(c.id) : joinedCommunities.has(c.id)).map((c) => (
                   <button key={c.id} onClick={() => { setActiveCommunity(c); setActiveChannel(c.channels[0]); }} className={`w-full flex items-center gap-3 px-4 py-3 transition border-b border-border/20 ${activeCommunity?.id === c.id ? "bg-surface-2/70" : "hover:bg-surface-2/40"}`}>
                     <div className={`size-12 rounded-2xl bg-gradient-to-br ${c.color} grid place-items-center font-bold text-lg text-white shrink-0`}>{c.avatar}</div>
                     <div className="flex-1 min-w-0 text-left">
@@ -1082,7 +1118,7 @@ function ChatPage() {
                   </button>
                 ))}
                 <div className="px-3 pt-4 pb-2 text-[10.5px] uppercase tracking-wider text-muted-foreground">Discover</div>
-                {DEMO_COMMUNITIES.filter((c) => !joinedCommunities.has(c.id)).map((c) => (
+                {(isDemo ? demoCommunities : DEMO_COMMUNITIES).filter((c) => isDemo ? !c.joined && !joinedCommunities.has(c.id) : !joinedCommunities.has(c.id)).map((c) => (
                   <div key={c.id} className="flex items-start gap-3 px-4 py-3 border-b border-border/20">
                     <div className={`size-12 rounded-2xl bg-gradient-to-br ${c.color} grid place-items-center font-bold text-lg text-white shrink-0`}>{c.avatar}</div>
                     <div className="flex-1 min-w-0">
