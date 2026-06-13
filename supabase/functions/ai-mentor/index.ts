@@ -1,4 +1,9 @@
-import { streamOpenRouter, type OpenRouterMessage } from "../_shared/openrouter.ts";
+import {
+  PRIMARY_MODEL,
+  SECONDARY_MODEL,
+  streamOpenRouter,
+  type OpenRouterMessage,
+} from "../_shared/openrouter.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,9 +49,27 @@ function streamedMessage(content: string) {
   });
 }
 
-function retryDelay(response: Response) {
-  const seconds = Number(response.headers.get("retry-after"));
-  return Number.isFinite(seconds) ? Math.min(Math.max(seconds, 1), 5) * 1000 : 1500;
+function shouldFailOver(response: Response) {
+  return response.status === 429 || response.status >= 500;
+}
+
+async function requestWithFailover(messages: OpenRouterMessage[], siteUrl: string) {
+  try {
+    const primary = await streamOpenRouter(messages, siteUrl, PRIMARY_MODEL);
+    if (!shouldFailOver(primary)) {
+      console.log(`AI mentor served by primary model: ${PRIMARY_MODEL}`);
+      return primary;
+    }
+
+    console.warn(`AI mentor primary failed with ${primary.status}; failing over to ${SECONDARY_MODEL}`);
+    await primary.body?.cancel();
+  } catch (error) {
+    console.warn(`AI mentor primary timed out or failed; failing over to ${SECONDARY_MODEL}`, error);
+  }
+
+  const secondary = await streamOpenRouter(messages, siteUrl, SECONDARY_MODEL);
+  console.log(`AI mentor failover response received from: ${SECONDARY_MODEL} (${secondary.status})`);
+  return secondary;
 }
 
 Deno.serve(async (request) => {
@@ -78,24 +101,12 @@ Deno.serve(async (request) => {
       content: `You are ${mentor.name}, the ${mentor.subject} mentor in JEE OS. ${mentor.persona} Stay in your domain. Give useful, structured answers suitable for a JEE student.`,
     };
     const siteUrl = request.headers.get("origin") || "https://apexrankos.lovable.app";
-    let upstream = await streamOpenRouter([system, ...validMessages], siteUrl);
-
-    if (upstream.status === 429) {
-      await upstream.body?.cancel();
-      await new Promise((resolve) => setTimeout(resolve, retryDelay(upstream)));
-      upstream = await streamOpenRouter([system, ...validMessages], siteUrl);
-    }
+    const upstream = await requestWithFailover([system, ...validMessages], siteUrl);
 
     if (!upstream.ok || !upstream.body) {
       const detail = await upstream.text();
-      console.error("OpenRouter request failed", upstream.status, detail);
-      if (upstream.status === 429) {
-        return streamedMessage("I’m receiving many consultations right now. Please wait a few seconds and ask me again.");
-      }
-      return Response.json(
-        { error: "The mentor could not respond right now." },
-        { status: 502, headers: corsHeaders },
-      );
+      console.error("AI mentor primary and failover unavailable", upstream.status, detail);
+      return streamedMessage("I’m receiving many consultations right now. Please wait a few seconds and ask me again.");
     }
 
     return new Response(upstream.body, {
