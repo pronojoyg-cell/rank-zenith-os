@@ -1,6 +1,6 @@
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-export const PRIMARY_MODEL = "meta-llama/llama-3.3-70b-instruct:free";
+export const PRIMARY_MODEL = "google/gemma-4-31b-it:free";
 export const SECONDARY_MODEL = "qwen/qwen3-next-80b-a3b-instruct:free";
 
 export type OpenRouterMessage = {
