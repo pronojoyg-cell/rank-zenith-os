@@ -70,7 +70,10 @@ export function PracticeEngine() {
     const unanswered = activeTest.questions.length - correct - incorrect.length;
     const weakPoints = incorrect.map((question) => ({ subject: question.subject, question: question.question, selected: answers[question.question_id - 1], correct: question.correct_answer, explanation: question.explanation }));
     const { error } = await supabase.from("test_attempts" as any).insert({ test_id: activeTest.id, user_id: user.id, answers, question_states: states, score: correct * 4 - incorrect.length, correct_count: correct, incorrect_count: incorrect.length, unanswered_count: unanswered, accuracy: Math.round((correct / activeTest.questions.length) * 100), weak_points: weakPoints, time_spent_seconds: timeSpent });
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     await supabase.from("practice_sessions").insert({ user_id: user.id, subject: activeTest.subject === "Mixed" ? "Physics" : activeTest.subject, chapter: activeTest.title, attempted: activeTest.questions.length, correct, duration_min: Math.max(1, Math.round(timeSpent / 60)), difficulty: "hard", notes: `AI CBT score: ${correct * 4 - incorrect.length}` } as any);
     queryClient.invalidateQueries({ queryKey: ["practice"] });
     queryClient.invalidateQueries({ queryKey: ["mentor-test-performance"] });

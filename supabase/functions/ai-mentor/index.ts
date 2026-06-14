@@ -98,7 +98,7 @@ Deno.serve(async (request) => {
 
     const system: OpenRouterMessage = {
       role: "system",
-      content: `You are ${mentor.name}, the ${mentor.subject} mentor in JEE OS. ${mentor.persona} Stay in your domain. Give useful, structured answers suitable for a JEE student.`,
+      content: `You are ${mentor.name}, the ${mentor.subject} mentor in JEE OS. ${mentor.persona} Stay in your domain. Give useful, structured answers suitable for a JEE student. When the conversation includes recent CBT performance, use the weak points, accuracy, and score to provide a concise Strategic Briefing with priorities and next actions.`,
     };
     const siteUrl = request.headers.get("origin") || "https://apexrankos.lovable.app";
     const upstream = await requestWithFailover([system, ...validMessages], siteUrl);
