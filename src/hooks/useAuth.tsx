@@ -20,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [guestName, setGuestName] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
     const g = localStorage.getItem("guest_mode") === "1";
     const gn = localStorage.getItem("guest_name");
     setIsGuest(g);
@@ -29,11 +30,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setLoading(false);
     });
+    const loadingFallback = window.setTimeout(() => {
+      if (active) setLoading(false);
+    }, 2500);
     supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
       setSession(data.session);
       setLoading(false);
+      window.clearTimeout(loadingFallback);
+    }).catch(() => {
+      if (active) setLoading(false);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      active = false;
+      window.clearTimeout(loadingFallback);
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const user = session?.user ?? null;
