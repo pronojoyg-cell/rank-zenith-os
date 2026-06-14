@@ -155,6 +155,45 @@ export type Database = {
         }
         Relationships: []
       }
+      generated_tests: {
+        Row: {
+          created_at: string
+          duration_minutes: number
+          id: string
+          questions: Json
+          source_filename: string
+          status: string
+          subject: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          questions?: Json
+          source_filename: string
+          status?: string
+          subject: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          questions?: Json
+          source_filename?: string
+          status?: string
+          subject?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mentor_messages: {
         Row: {
           content: string
@@ -446,6 +485,68 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_attempts: {
+        Row: {
+          accuracy: number
+          answers: Json
+          completed_at: string
+          correct_count: number
+          created_at: string
+          id: string
+          incorrect_count: number
+          question_states: Json
+          score: number
+          test_id: string
+          time_spent_seconds: number
+          unanswered_count: number
+          updated_at: string
+          user_id: string
+          weak_points: Json
+        }
+        Insert: {
+          accuracy?: number
+          answers?: Json
+          completed_at?: string
+          correct_count?: number
+          created_at?: string
+          id?: string
+          incorrect_count?: number
+          question_states?: Json
+          score?: number
+          test_id: string
+          time_spent_seconds?: number
+          unanswered_count?: number
+          updated_at?: string
+          user_id: string
+          weak_points?: Json
+        }
+        Update: {
+          accuracy?: number
+          answers?: Json
+          completed_at?: string
+          correct_count?: number
+          created_at?: string
+          id?: string
+          incorrect_count?: number
+          question_states?: Json
+          score?: number
+          test_id?: string
+          time_spent_seconds?: number
+          unanswered_count?: number
+          updated_at?: string
+          user_id?: string
+          weak_points?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_attempts_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "generated_tests"
             referencedColumns: ["id"]
           },
         ]
