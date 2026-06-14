@@ -9,8 +9,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useDataMode } from "@/hooks/useDataMode";
 import { demoPractice } from "@/lib/demo-data";
+import { PracticeEngine } from "@/components/PracticeEngine";
 
-export const Route = createFileRoute("/practice")({ component: Practice });
+export const Route = createFileRoute("/practice")({ component: PracticeEngine });
 
 const SUBJECTS = ["Physics", "Chemistry", "Maths"] as const;
 const DIFFS = ["easy", "medium", "hard", "advanced"] as const;

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 import ramanujanImg from "@/assets/mentor-ramanujan.jpg";
 import boseImg from "@/assets/mentor-bose.jpg";
 import pcrayImg from "@/assets/mentor-pcray.jpg";
@@ -67,12 +69,21 @@ async function streamMentorReply(mentor: Mentor, messages: ChatMessage[], onToke
 }
 
 function Mentor() {
+  const { user } = useAuth();
   const [activeMentor, setActiveMentor] = useState<Mentor | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const performance = useQuery({
+    queryKey: ["mentor-test-performance", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase.from("test_attempts" as any).select("score,accuracy,weak_points,completed_at,generated_tests(title,subject)").eq("user_id", user?.id).order("completed_at", { ascending: false }).limit(5);
+      return data ?? [];
+    },
+  });
 
   useEffect(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
 
@@ -86,7 +97,8 @@ function Mentor() {
     event.preventDefault();
     const prompt = input.trim();
     if (!activeMentor || !prompt || streaming) return;
-    const history = [...messages, { role: "user" as const, content: prompt }];
+    const strategicContext = performance.data?.length ? `\n\nRecent CBT performance for strategic briefing: ${JSON.stringify(performance.data).slice(0, 2500)}` : "";
+    const history = [...messages, { role: "user" as const, content: prompt + strategicContext }];
     setInput("");
     setError(null);
     setStreaming(true);
