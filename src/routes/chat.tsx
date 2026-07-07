@@ -98,6 +98,34 @@ export const Route = createFileRoute("/chat")({
   head: () => ({ meta: [{ title: "Chat with Peers — JEE OS" }] }),
 });
 
+// Resolves a chat_media path to a temporary signed URL. Falls back to using the
+// value as-is when it already looks like an absolute URL (legacy rows).
+function useSignedMediaUrl(pathOrUrl: string | null) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!pathOrUrl) { setUrl(null); return; }
+    if (/^https?:\/\//i.test(pathOrUrl)) { setUrl(pathOrUrl); return; }
+    supabase.storage.from("chat_media").createSignedUrl(pathOrUrl, 3600).then(({ data }) => {
+      if (!cancelled) setUrl(data?.signedUrl ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [pathOrUrl]);
+  return url;
+}
+
+function SignedImage({ path, onClick, className, alt }: { path: string; onClick?: (url: string) => void; className?: string; alt?: string }) {
+  const url = useSignedMediaUrl(path);
+  if (!url) return <div className={`${className ?? ""} bg-surface-2 animate-pulse`} />;
+  return <button type="button" onClick={() => onClick?.(url)} className="block mb-1"><img src={url} alt={alt ?? "Shared"} className={className} /></button>;
+}
+
+function SignedVideo({ path, className }: { path: string; className?: string }) {
+  const url = useSignedMediaUrl(path);
+  if (!url) return <div className={`${className ?? ""} bg-surface-2 animate-pulse`} />;
+  return <div className="mb-1"><video src={url} className={className} controls preload="metadata" /></div>;
+}
+
 type Tab = "chats" | "groups" | "clips" | "communities";
 
 type Msg = {
