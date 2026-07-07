@@ -746,10 +746,9 @@ function ChatPage() {
       const path = `${user!.id}/${Date.now()}_${file.name}`;
       const { data: up, error } = await supabase.storage.from("chat_media").upload(path, file, { cacheControl: "3600", upsert: false });
       if (error) throw error;
-      const { data } = supabase.storage.from("chat_media").getPublicUrl(up!.path);
-      const mediaUrl = data.publicUrl;
+      // Store the storage PATH (not a public URL). The bucket is private; viewers resolve a signed URL at render time.
       const isVideo = file.type.startsWith("video");
-      await supabase.from("messages").insert({ room_id: activeRoom, sender_id: user!.id, message_text: "", media_url: mediaUrl, message_type: isVideo ? "video" : "image" } as any);
+      await supabase.from("messages").insert({ room_id: activeRoom, sender_id: user!.id, message_text: "", media_url: up!.path, message_type: isVideo ? "video" : "image" } as any);
       toast.success(isVideo ? "Video sent" : "Image sent");
     } catch (e: any) { toast.error(e.message || "Upload failed"); }
     setFileUploading(false);
