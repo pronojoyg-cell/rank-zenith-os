@@ -974,8 +974,8 @@ function ChatPage() {
                               <div className={`relative px-3 py-2 text-sm shadow-sm ${gone ? "rounded-2xl bg-surface-2/50 text-muted-foreground italic flex items-center gap-1.5" : mine ? `bg-primary text-primary-foreground ${prevMine ? "rounded-2xl" : "rounded-2xl rounded-br-sm"}` : `bg-surface-2 text-foreground ${prevMine ? "rounded-2xl" : "rounded-2xl rounded-bl-sm"}`}`}>
                                 {gone ? <><Ban className="size-3" /> This message was deleted</> : (
                                   <>
-                                    {m.message_type === "image" && m.media_url && <button onClick={() => setShowImagePreview(m.media_url)} className="block mb-1"><img src={m.media_url} alt="Shared" className="rounded-lg max-w-[240px] max-h-[200px] object-cover" /></button>}
-                                    {m.message_type === "video" && m.media_url && <div className="mb-1"><video src={m.media_url} className="rounded-lg max-w-[240px] max-h-[200px] object-cover" controls preload="metadata" /></div>}
+                                    {m.message_type === "image" && m.media_url && <SignedImage path={m.media_url} onClick={(u) => setShowImagePreview(u)} className="rounded-lg max-w-[240px] max-h-[200px] object-cover" />}
+                                    {m.message_type === "video" && m.media_url && <SignedVideo path={m.media_url} className="rounded-lg max-w-[240px] max-h-[200px] object-cover" />}
                                     {m.message_text && <span className="break-words">{m.message_text}</span>}
                                     <span className={`ml-2 text-[10px] ${mine ? "text-primary-foreground/60" : "text-muted-foreground"} inline-flex items-center gap-0.5 float-right mt-0.5`}>{formatTime(m.created_at)}{mine && <CheckCheck className="size-3" />}</span>
                                   </>
