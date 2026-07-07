@@ -31,10 +31,38 @@ export const Route = createFileRoute("/api/mentor")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Require authenticated Bearer token
+        const authHeader = request.headers.get("authorization") ?? "";
+        if (!authHeader.startsWith("Bearer ")) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+        const token = authHeader.slice("Bearer ".length).trim();
+        if (!token) return new Response("Unauthorized", { status: 401 });
+
+        const SUPABASE_URL = process.env.SUPABASE_URL;
+        const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+        if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+          return new Response("Auth not configured", { status: 500 });
+        }
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+          auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+        });
+        const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+        if (claimsError || !claimsData?.claims?.sub) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+
         const apiKey = process.env.LOVABLE_API_KEY;
         if (!apiKey) return new Response("AI not configured", { status: 500 });
 
-        const { history, context, mentor } = await request.json();
+        const rawBody = await request.text();
+        if (rawBody.length > 32_000) {
+          return new Response("Payload too large", { status: 413 });
+        }
+        let parsed: any;
+        try { parsed = JSON.parse(rawBody); } catch { return new Response("Bad request", { status: 400 }); }
+        const { history, context, mentor } = parsed ?? {};
         const m = MENTORS[mentor as string] ?? MENTORS.ramanujan;
 
         const offTopic =

@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-const DEV_TOKEN = "954128";
+const DEV_MODE_ENABLED = import.meta.env.DEV;
 
 const ERROR_CATEGORIES = [
   { key: "silly", label: "Silly Mistakes", color: "var(--chart-2)" },
@@ -43,10 +43,14 @@ function DevGate({ onUnlock }: { onUnlock: () => void }) {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (code === DEV_TOKEN) {
+    if (!DEV_MODE_ENABLED) {
+      setError("Developer analytics are disabled in production.");
+      return;
+    }
+    if (code.length === 6) {
       onUnlock();
     } else {
-      setError("Invalid access token.");
+      setError("Enter a 6-digit code.");
     }
   };
 
@@ -58,7 +62,9 @@ function DevGate({ onUnlock }: { onUnlock: () => void }) {
       </div>
       <h2 className="mt-2 text-2xl font-semibold tracking-tight">DEVELOPER SYSTEM CONTROL</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Verify developer access token code to initialize analytics sync.
+        {DEV_MODE_ENABLED
+          ? "Developer analytics are only available in local development builds."
+          : "This dashboard is disabled in production builds."}
       </p>
       <form onSubmit={submit} className="mt-6 space-y-3">
         <Input
@@ -72,9 +78,10 @@ function DevGate({ onUnlock }: { onUnlock: () => void }) {
             setError(null);
           }}
           className="font-mono tracking-[0.5em] text-center text-lg"
+          disabled={!DEV_MODE_ENABLED}
         />
         {error && <p className="text-xs text-danger">{error}</p>}
-        <Button type="submit" className="w-full" disabled={code.length !== 6}>
+        <Button type="submit" className="w-full" disabled={!DEV_MODE_ENABLED || code.length !== 6}>
           <ShieldCheck className="size-4 mr-2" /> Initialize
         </Button>
       </form>

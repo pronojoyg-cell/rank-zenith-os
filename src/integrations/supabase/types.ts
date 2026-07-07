@@ -604,6 +604,10 @@ export type Database = {
         Args: { _room: string; _user: string }
         Returns: boolean
       }
+      soft_delete_message_for_me: {
+        Args: { _message_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       connection_status_t: "pending" | "accepted" | "blocked"
