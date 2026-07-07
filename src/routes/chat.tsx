@@ -98,6 +98,34 @@ export const Route = createFileRoute("/chat")({
   head: () => ({ meta: [{ title: "Chat with Peers — JEE OS" }] }),
 });
 
+// Resolves a chat_media path to a temporary signed URL. Falls back to using the
+// value as-is when it already looks like an absolute URL (legacy rows).
+function useSignedMediaUrl(pathOrUrl: string | null) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!pathOrUrl) { setUrl(null); return; }
+    if (/^https?:\/\//i.test(pathOrUrl)) { setUrl(pathOrUrl); return; }
+    supabase.storage.from("chat_media").createSignedUrl(pathOrUrl, 3600).then(({ data }) => {
+      if (!cancelled) setUrl(data?.signedUrl ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [pathOrUrl]);
+  return url;
+}
+
+function SignedImage({ path, onClick, className, alt }: { path: string; onClick?: (url: string) => void; className?: string; alt?: string }) {
+  const url = useSignedMediaUrl(path);
+  if (!url) return <div className={`${className ?? ""} bg-surface-2 animate-pulse`} />;
+  return <button type="button" onClick={() => onClick?.(url)} className="block mb-1"><img src={url} alt={alt ?? "Shared"} className={className} /></button>;
+}
+
+function SignedVideo({ path, className }: { path: string; className?: string }) {
+  const url = useSignedMediaUrl(path);
+  if (!url) return <div className={`${className ?? ""} bg-surface-2 animate-pulse`} />;
+  return <div className="mb-1"><video src={url} className={className} controls preload="metadata" /></div>;
+}
+
 type Tab = "chats" | "groups" | "clips" | "communities";
 
 type Msg = {
@@ -317,13 +345,11 @@ function CreateClipDialog({ open, onClose }: { open: boolean; onClose: () => voi
     if (!caption.trim() && !file) { toast.error("Add a caption or media"); return; }
     setLoading(true);
     try {
-      let mediaUrl: string | null = null;
       if (file) {
         const path = `${user!.id}/${Date.now()}_${file.name}`;
-        const { data: up, error } = await supabase.storage.from("chat_media").upload(path, file, { cacheControl: "3600", upsert: false });
+        const { error } = await supabase.storage.from("chat_media").upload(path, file, { cacheControl: "3600", upsert: false });
         if (error) throw error;
-        const { data } = supabase.storage.from("chat_media").getPublicUrl(up!.path);
-        mediaUrl = data.publicUrl;
+        // Bucket is private; consumers resolve a signed URL when rendering.
       }
       toast.success("Clip shared!");
       setCaption("");
@@ -746,10 +772,9 @@ function ChatPage() {
       const path = `${user!.id}/${Date.now()}_${file.name}`;
       const { data: up, error } = await supabase.storage.from("chat_media").upload(path, file, { cacheControl: "3600", upsert: false });
       if (error) throw error;
-      const { data } = supabase.storage.from("chat_media").getPublicUrl(up!.path);
-      const mediaUrl = data.publicUrl;
+      // Store the storage PATH (not a public URL). The bucket is private; viewers resolve a signed URL at render time.
       const isVideo = file.type.startsWith("video");
-      await supabase.from("messages").insert({ room_id: activeRoom, sender_id: user!.id, message_text: "", media_url: mediaUrl, message_type: isVideo ? "video" : "image" } as any);
+      await supabase.from("messages").insert({ room_id: activeRoom, sender_id: user!.id, message_text: "", media_url: up!.path, message_type: isVideo ? "video" : "image" } as any);
       toast.success(isVideo ? "Video sent" : "Image sent");
     } catch (e: any) { toast.error(e.message || "Upload failed"); }
     setFileUploading(false);
@@ -767,8 +792,7 @@ function ChatPage() {
   };
 
   const deleteForMe = async (m: Msg) => {
-    const arr = Array.from(new Set([...(m.deleted_by_users ?? []), user!.id]));
-    const { error } = await supabase.from("messages").update({ deleted_by_users: arr }).eq("id", m.id);
+    const { error } = await supabase.rpc("soft_delete_message_for_me" as any, { _message_id: m.id });
     if (error) toast.error(error.message);
   };
 
@@ -950,8 +974,8 @@ function ChatPage() {
                               <div className={`relative px-3 py-2 text-sm shadow-sm ${gone ? "rounded-2xl bg-surface-2/50 text-muted-foreground italic flex items-center gap-1.5" : mine ? `bg-primary text-primary-foreground ${prevMine ? "rounded-2xl" : "rounded-2xl rounded-br-sm"}` : `bg-surface-2 text-foreground ${prevMine ? "rounded-2xl" : "rounded-2xl rounded-bl-sm"}`}`}>
                                 {gone ? <><Ban className="size-3" /> This message was deleted</> : (
                                   <>
-                                    {m.message_type === "image" && m.media_url && <button onClick={() => setShowImagePreview(m.media_url)} className="block mb-1"><img src={m.media_url} alt="Shared" className="rounded-lg max-w-[240px] max-h-[200px] object-cover" /></button>}
-                                    {m.message_type === "video" && m.media_url && <div className="mb-1"><video src={m.media_url} className="rounded-lg max-w-[240px] max-h-[200px] object-cover" controls preload="metadata" /></div>}
+                                    {m.message_type === "image" && m.media_url && <SignedImage path={m.media_url} onClick={(u) => setShowImagePreview(u)} className="rounded-lg max-w-[240px] max-h-[200px] object-cover" />}
+                                    {m.message_type === "video" && m.media_url && <SignedVideo path={m.media_url} className="rounded-lg max-w-[240px] max-h-[200px] object-cover" />}
                                     {m.message_text && <span className="break-words">{m.message_text}</span>}
                                     <span className={`ml-2 text-[10px] ${mine ? "text-primary-foreground/60" : "text-muted-foreground"} inline-flex items-center gap-0.5 float-right mt-0.5`}>{formatTime(m.created_at)}{mine && <CheckCheck className="size-3" />}</span>
                                   </>
