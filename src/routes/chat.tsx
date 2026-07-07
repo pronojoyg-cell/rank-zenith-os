@@ -317,13 +317,11 @@ function CreateClipDialog({ open, onClose }: { open: boolean; onClose: () => voi
     if (!caption.trim() && !file) { toast.error("Add a caption or media"); return; }
     setLoading(true);
     try {
-      let mediaUrl: string | null = null;
       if (file) {
         const path = `${user!.id}/${Date.now()}_${file.name}`;
-        const { data: up, error } = await supabase.storage.from("chat_media").upload(path, file, { cacheControl: "3600", upsert: false });
+        const { error } = await supabase.storage.from("chat_media").upload(path, file, { cacheControl: "3600", upsert: false });
         if (error) throw error;
-        const { data } = supabase.storage.from("chat_media").getPublicUrl(up!.path);
-        mediaUrl = data.publicUrl;
+        // Bucket is private; consumers resolve a signed URL when rendering.
       }
       toast.success("Clip shared!");
       setCaption("");
