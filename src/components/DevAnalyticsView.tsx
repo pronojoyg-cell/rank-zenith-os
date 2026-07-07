@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-const DEV_TOKEN = "954128";
+const DEV_MODE_ENABLED = import.meta.env.DEV;
 
 const ERROR_CATEGORIES = [
   { key: "silly", label: "Silly Mistakes", color: "var(--chart-2)" },
