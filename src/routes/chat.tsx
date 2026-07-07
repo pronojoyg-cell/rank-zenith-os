@@ -764,8 +764,7 @@ function ChatPage() {
   };
 
   const deleteForMe = async (m: Msg) => {
-    const arr = Array.from(new Set([...(m.deleted_by_users ?? []), user!.id]));
-    const { error } = await supabase.from("messages").update({ deleted_by_users: arr }).eq("id", m.id);
+    const { error } = await supabase.rpc("soft_delete_message_for_me" as any, { _message_id: m.id });
     if (error) toast.error(error.message);
   };
 
