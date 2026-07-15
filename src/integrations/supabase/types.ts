@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_secrets: {
+        Row: {
+          id: number
+          passcode_hash: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          passcode_hash: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          passcode_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_error_flags: {
+        Row: {
+          cbt_id: string | null
+          corrected_answer: string | null
+          created_at: string
+          id: string
+          question_id: string | null
+          reported_by: string | null
+          status: string
+          user_feedback: string
+        }
+        Insert: {
+          cbt_id?: string | null
+          corrected_answer?: string | null
+          created_at?: string
+          id?: string
+          question_id?: string | null
+          reported_by?: string | null
+          status?: string
+          user_feedback: string
+        }
+        Update: {
+          cbt_id?: string | null
+          corrected_answer?: string | null
+          created_at?: string
+          id?: string
+          question_id?: string | null
+          reported_by?: string | null
+          status?: string
+          user_feedback?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_error_flags_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_error_flags_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_rooms: {
         Row: {
           created_at: string
@@ -37,6 +103,48 @@ export type Database = {
           name?: string | null
         }
         Relationships: []
+      }
+      complaints: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          message: string
+          profile_id: string
+          status: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          message: string
+          profile_id: string
+          status?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          profile_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "complaints_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "complaints_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       connections: {
         Row: {
@@ -393,35 +501,53 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_credits: number
           created_at: string
           current_streak: number
+          current_tier: Database["public"]["Enums"]["tier_t"]
           display_name: string | null
           exam_date: string | null
+          full_name: string | null
           id: string
           is_incognito: boolean
+          is_suspended: boolean
           last_activity_date: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"]
           target_air: number | null
           total_points: number
         }
         Insert: {
+          ai_credits?: number
           created_at?: string
           current_streak?: number
+          current_tier?: Database["public"]["Enums"]["tier_t"]
           display_name?: string | null
           exam_date?: string | null
+          full_name?: string | null
           id: string
           is_incognito?: boolean
+          is_suspended?: boolean
           last_activity_date?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
           target_air?: number | null
           total_points?: number
         }
         Update: {
+          ai_credits?: number
           created_at?: string
           current_streak?: number
+          current_tier?: Database["public"]["Enums"]["tier_t"]
           display_name?: string | null
           exam_date?: string | null
+          full_name?: string | null
           id?: string
           is_incognito?: boolean
+          is_suspended?: boolean
           last_activity_date?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
           target_air?: number | null
           total_points?: number
         }
@@ -489,6 +615,30 @@ export type Database = {
           },
         ]
       }
+      security_breach_log: {
+        Row: {
+          created_at: string
+          id: string
+          ip: string | null
+          reason: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          reason: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          reason?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       test_attempts: {
         Row: {
           accuracy: number
@@ -551,6 +701,60 @@ export type Database = {
           },
         ]
       }
+      user_analytics: {
+        Row: {
+          active_devices: number
+          cost_cents: number
+          credits_burned: number
+          deep_work_minutes: number
+          peak_usage_hours: Json
+          profile_id: string
+          revenue_cents: number
+          total_cbts_generated: number
+          total_mistakes_logged: number
+          updated_at: string
+        }
+        Insert: {
+          active_devices?: number
+          cost_cents?: number
+          credits_burned?: number
+          deep_work_minutes?: number
+          peak_usage_hours?: Json
+          profile_id: string
+          revenue_cents?: number
+          total_cbts_generated?: number
+          total_mistakes_logged?: number
+          updated_at?: string
+        }
+        Update: {
+          active_devices?: number
+          cost_cents?: number
+          credits_burned?: number
+          deep_work_minutes?: number
+          peak_usage_hours?: Json
+          profile_id?: string
+          revenue_cents?: number
+          total_cbts_generated?: number
+          total_mistakes_logged?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_analytics_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "leaderboard_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_analytics_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       leaderboard_public: {
@@ -600,6 +804,7 @@ export type Database = {
         }
       }
       get_or_create_dm: { Args: { _peer: string }; Returns: string }
+      is_admin: { Args: { _uid: string }; Returns: boolean }
       is_room_member: {
         Args: { _room: string; _user: string }
         Returns: boolean
@@ -608,13 +813,19 @@ export type Database = {
         Args: { _message_id: string }
         Returns: undefined
       }
+      verify_admin_passcode: {
+        Args: { input_passcode: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "user"
       connection_status_t: "pending" | "accepted" | "blocked"
       difficulty_t: "easy" | "medium" | "hard" | "advanced"
       mistake_t: "silly" | "concept" | "calculation" | "time" | "misread"
       rev_stage_t: "D1" | "D3" | "D7" | "D14" | "D30" | "mastered"
       subject_t: "Physics" | "Chemistry" | "Maths"
+      tier_t: "free" | "monthly" | "elite"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -742,11 +953,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       connection_status_t: ["pending", "accepted", "blocked"],
       difficulty_t: ["easy", "medium", "hard", "advanced"],
       mistake_t: ["silly", "concept", "calculation", "time", "misread"],
       rev_stage_t: ["D1", "D3", "D7", "D14", "D30", "mastered"],
       subject_t: ["Physics", "Chemistry", "Maths"],
+      tier_t: ["free", "monthly", "elite"],
     },
   },
 } as const
